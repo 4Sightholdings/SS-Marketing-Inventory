@@ -18,13 +18,8 @@ body {
 .header { text-align:center; }
 .header h1 { font-size:36px; }
 
-/* BUTTONS */
-.filters {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:20px;
-}
+/* FILTERS */
+.filters { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
 button,input {
     padding:10px;
     border-radius:8px;
@@ -39,10 +34,9 @@ button {
 /* DATASET TABS */
 .dataset-tabs {
     display:flex;
-    justify-content:flex-start;
-    gap:10px;
-    margin-bottom:10px;
+    gap:8px;
     flex-wrap:wrap;
+    margin-bottom:15px;
 }
 .dataset-tab {
     padding:6px 12px;
@@ -56,10 +50,10 @@ button {
 }
 
 /* CLUSTER TABS */
-.clusters {
+.cluster-tabs {
     display:flex;
     justify-content:center;
-    gap:8px;
+    gap:10px;
     margin-bottom:15px;
 }
 .cluster-tab {
@@ -73,25 +67,26 @@ button {
     color:#002f6c;
 }
 
-/* CONTENT */
+/* BANNERS */
 .banner-header {
-    margin-top:10px;
     padding:10px;
+    margin-top:10px;
     background:rgba(255,255,255,0.15);
     border-radius:6px;
     cursor:pointer;
 }
 .banner-content {
     display:none;
-    padding:10px;
 }
 
+/* TABLE */
 table {
     width:100%;
     border-collapse:collapse;
+    table-layout:fixed;
 }
 th,td {
-    padding:8px;
+    padding:10px;
     text-align:left;
 }
 th { background:#002f6c; }
@@ -109,16 +104,16 @@ td { border-bottom:1px solid rgba(255,255,255,0.1); }
 <div class="filters">
 <input type="file" id="fileInput">
 <button onclick="upload()">Upload</button>
-<button onclick="clearAll()">Clear</button>
+<button onclick="clearAll()">Clear All</button>
 </div>
 
 <div id="datasetTabs" class="dataset-tabs"></div>
 
-<div class="clusters">
-<div class="cluster-tab active" onclick="switchCluster('CP')" id="c-CP">CP</div>
-<div class="cluster-tab" onclick="switchCluster('BE')" id="c-BE">BE</div>
-<div class="cluster-tab" onclick="switchCluster('IT')" id="c-IT">IT</div>
-<div class="cluster-tab" onclick="switchCluster('OT')" id="c-OT">OT</div>
+<div class="cluster-tabs">
+    <div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
+    <div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
+    <div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
+    <div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
 </div>
 
 <div id="output"></div>
@@ -131,10 +126,10 @@ let activeCluster="CP";
 
 /* LOAD STORAGE */
 window.onload=()=>{
-    let s=localStorage.getItem("clickDB");
-    if(s){
-        datasets=JSON.parse(s);
-        renderTabs();
+    let saved = localStorage.getItem("clickDatasets");
+    if(saved){
+        datasets = JSON.parse(saved);
+        renderDatasetTabs();
         render();
     }
 };
@@ -151,22 +146,22 @@ function upload(){
         let wb=XLSX.read(e.target.result,{type:'array'});
         let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-        let dates=data.map(d=>new Date(d["Time Clicked"]))
-                      .filter(d=>!isNaN(d))
-                      .sort((a,b)=>a-b);
+        // ✅ EXTRACT DATE RANGE
+        let dates = data.map(d=>new Date(d["Time Clicked"]))
+                        .filter(d=>!isNaN(d))
+                        .sort((a,b)=>a-b);
 
-        let label="Unknown Dates";
+        let label="Unknown";
         if(dates.length){
-            let start=dates[0].toLocaleDateString();
-            let end=dates[dates.length-1].toLocaleDateString();
-            label=start+" → "+end;
+            label = dates[0].toLocaleDateString() + " → " +
+                    dates[dates.length-1].toLocaleDateString();
         }
 
         datasets.unshift({label,data}); // newest first
 
-        localStorage.setItem("clickDB",JSON.stringify(datasets));
+        localStorage.setItem("clickDatasets", JSON.stringify(datasets));
 
-        renderTabs();
+        renderDatasetTabs();
         render();
 
         fileInput.value="";
@@ -177,47 +172,49 @@ function upload(){
 
 /* CLEAR */
 function clearAll(){
-    localStorage.removeItem("clickDB");
+    localStorage.removeItem("clickDatasets");
     location.reload();
 }
 
 /* DATASET TABS */
-function renderTabs(){
+function renderDatasetTabs(){
+
     let html="";
+
     datasets.forEach((d,i)=>{
-        html+=`<div class="dataset-tab ${i===activeDataset?'active':''}" onclick="setDataset(${i})">
-        ${d.label}
-        </div>`;
+        html+=`<div class="dataset-tab ${i===activeDataset?'active':''}"
+        onclick="setDataset(${i})">${d.label}</div>`;
     });
-    datasetTabs.innerHTML=html;
+
+    document.getElementById("datasetTabs").innerHTML=html;
 }
 
 function setDataset(i){
     activeDataset=i;
-    renderTabs();
+    renderDatasetTabs();
     render();
 }
 
 /* CLUSTER SWITCH */
-function switchCluster(c){
+function setCluster(c){
     activeCluster=c;
     document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
     document.getElementById("c-"+c).classList.add("active");
     render();
 }
 
-/* DATE PARSE */
+/* DATE */
 function parseDate(v){
     let d=new Date(v);
     return isNaN(d)?null:d;
 }
 
-/* PROCESS */
+/* RENDER */
 function render(){
 
     if(!datasets.length) return;
 
-    let raw=datasets[activeDataset].data;
+    let raw = datasets[activeDataset].data;
 
     let grouped={};
 
@@ -245,9 +242,9 @@ function render(){
         }
     });
 
-    let final=Object.values(grouped);
+    let final = Object.values(grouped);
 
-    final.sort((a,b)=>b.days.size-a.days.size);
+    final.sort((a,b)=>b.days.size - a.days.size);
 
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
@@ -277,7 +274,7 @@ function renderCluster(data){
 
         html+=`
         <div class="banner-header" onclick="toggle(this)">
-        ${banner}
+            ${banner}
         </div>
 
         <div class="banner-content">
@@ -302,7 +299,7 @@ function renderCluster(data){
         html+="</table></div>";
     });
 
-    output.innerHTML=html;
+    document.getElementById("output").innerHTML=html;
 }
 
 /* DROPDOWN */
