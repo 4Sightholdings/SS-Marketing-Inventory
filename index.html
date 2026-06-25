@@ -11,7 +11,7 @@ body{font-family:'Inter',sans-serif;background:#f0f2f5;color:#333}
 .header{background:linear-gradient(135deg,#0a1628 0%,#1a2744 40%,#1e3a5f 70%,#2563eb 100%);position:relative;overflow:hidden;padding:40px 40px 60px;text-align:center}
 .header::before{content:'';position:absolute;top:0;left:0;right:0;bottom:0;background:linear-gradient(160deg,rgba(37,99,235,0.15) 0%,transparent 50%)}
 .header::after{content:'';position:absolute;bottom:-2px;left:0;right:0;height:60px;background:linear-gradient(170deg,transparent 30%,rgba(37,99,235,0.3) 50%,#0d1b36 100%);transform:skewY(-2deg);transform-origin:left}
-.logo{position:absolute;top:15px;left:25px;height:55px;z-index:2;object-fit:contain}
+.logo{position:absolute;top:8px;left:25px;height:95px;z-index:2;object-fit:contain}
 .header h1{font-size:2.4rem;font-weight:700;color:#fff;position:relative;z-index:2;letter-spacing:1px}
 .header p{font-size:0.95rem;color:rgba(255,255,255,0.7);margin-top:8px;position:relative;z-index:2}
 .stripe{position:absolute;top:50%;left:-10%;width:120%;height:40px;background:linear-gradient(90deg,transparent,rgba(79,195,247,0.1),transparent);transform:rotate(-3deg);z-index:1}
@@ -189,7 +189,7 @@ tbody tr:hover{background:#f8faff}
     <div class="kpi-card border-green"><div class="label">Total Dispatched</div><div class="value" id="kpiTotalDispatched">720</div><div class="sub">Jan–Jul 2026</div></div>
   </div>
   <div class="card"><h3>All Dispatch Events</h3>
-    <table><thead><tr><th>Date</th><th>Cluster</th><th>Event</th><th>Items Dispatched</th><th>Type</th></tr></thead><tbody id="dispatchTbody">
+    <table><thead><tr><th>Date</th><th>Cluster</th><th>Event</th><th>Items Dispatched</th><th>Type</th><th style="width:60px;text-align:center">Action</th></tr></thead><tbody id="dispatchTbody">
       <tr><td>26 Jan 2026</td><td><span class="badge badge-gray">SS</span></td><td>TZ Partner meeting</td><td>Blue bags×10, Water Bottles×10, Pens×10, Notebooks×10, Elephant pads×10</td><td><span class="badge-dispatch">Dispatch</span></td></tr>
       <tr><td>28 Jan 2026</td><td><span class="badge badge-olive">BE</span></td><td>GlenCore Braai</td><td>Pens×8, Wine openers×6, Organza Bags×6</td><td><span class="badge-dispatch">Dispatch</span></td></tr>
       <tr><td>28 Jan 2026</td><td><span class="badge badge-gray">SS</span></td><td>Therisa Golfday</td><td>Golf Shirts M×1, Golf Shirts 2XL×1, Socks×1</td><td><span class="badge-dispatch">Dispatch</span></td></tr>
@@ -605,7 +605,7 @@ window.addEventListener('load', renderChart);
       var itemsText=items.map(function(it){ return it.item+'&times;'+it.qty; }).join(', ');
       var badgeClass=clusterBadge[cluster]||'badge badge-gray';
       var tr=document.createElement('tr');
-      tr.innerHTML='<td>'+formatDate(date)+'</td><td><span class="'+badgeClass+'">'+cluster+'</span></td><td>'+event+'</td><td>'+itemsText+'</td><td><span class="badge-dispatch">Dispatch</span></td>';
+      tr.innerHTML='<td>'+formatDate(date)+'</td><td><span class="'+badgeClass+'">'+cluster+'</span></td><td>'+event+'</td><td>'+itemsText+'</td><td><span class="badge-dispatch">Dispatch</span></td><td style="text-align:center"><button class="delete-row-btn" title="Delete this dispatch">🗑️</button></td>';
       tr.style.background='#fffbe6';
       tbody.appendChild(tr);
       setTimeout(function(){ tr.style.transition='background 1s'; tr.style.background=''; },50);
