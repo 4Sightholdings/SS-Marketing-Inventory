@@ -107,7 +107,7 @@ td { border-bottom:1px solid rgba(255,255,255,0.1); }
 let data = [];
 let activeCluster = "CP";
 
-/* ✅ Load stored data */
+/* ✅ Load saved data */
 window.onload = () => {
     let s = localStorage.getItem("clickData");
     if (s) {
@@ -116,23 +116,40 @@ window.onload = () => {
     }
 };
 
-/* ✅ Upload Excel */
+/* ✅ Upload */
 function upload(){
 
     let file = fileInput.files[0];
-    if(!file) return;
+    if(!file){
+        alert("Please select a file");
+        return;
+    }
 
     let reader = new FileReader();
 
-    reader.onload = (e)=>{
-        let wb = XLSX.read(e.target.result,{type:'array'});
-        data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    reader.onload = function(e){
 
-        console.log("RAW:", data); // 👈 debug
+        try{
+            let wb = XLSX.read(e.target.result,{type:'array'});
 
-        localStorage.setItem("clickData", JSON.stringify(data));
+            let sheet = wb.Sheets[wb.SheetNames[0]];
+            data = XLSX.utils.sheet_to_json(sheet);
 
-        render();
+            console.log("Loaded data:", data);
+
+            if(data.length === 0){
+                alert("No data found in Excel file");
+                return;
+            }
+
+            localStorage.setItem("clickData", JSON.stringify(data));
+
+            render();
+
+        } catch(err){
+            console.error(err);
+            alert("Error reading Excel file");
+        }
     };
 
     reader.readAsArrayBuffer(file);
@@ -144,7 +161,7 @@ function clearAll(){
     location.reload();
 }
 
-/* ✅ Cluster switch */
+/* ✅ Cluster */
 function setCluster(c){
     activeCluster = c;
 
@@ -163,9 +180,6 @@ function parseDate(v){
     }
 
     let d = new Date(v);
-    if(!isNaN(d)) return d;
-
-    d = new Date(v.replace(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/, "$3-$2-$1"));
     return isNaN(d) ? null : d;
 }
 
@@ -205,8 +219,6 @@ function render(){
     });
 
     let final = Object.values(grouped);
-
-    console.log("FINAL:", final); // 👈 debug
 
     let clusters = {CP:[], BE:[], IT:[], OT:[]};
 
@@ -266,7 +278,7 @@ function renderCluster(data){
     output.innerHTML = html;
 }
 
-/* ✅ Toggle dropdown */
+/* ✅ Toggle */
 function toggle(el){
     let c = el.nextElementSibling;
     c.style.display = (c.style.display==="block")?"none":"block";
@@ -276,3 +288,4 @@ function toggle(el){
 
 </body>
 </html>
+``
