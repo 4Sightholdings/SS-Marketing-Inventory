@@ -1,131 +1,11 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>4Sight Click Intelligence</title>
-
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-
-<style>
-body {
-    font-family: Segoe UI;
-    background: radial-gradient(circle at top,#0a2a5e,#001833 80%);
-    color:white;
-    padding:20px;
-}
-
-.header { text-align:center; margin-bottom:20px; }
-
-/* Buttons */
-.filters {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:20px;
-}
-button,input {
-    padding:10px;
-    border-radius:8px;
-    border:none;
-}
-button {
-    background:#0078d4;
-    color:white;
-    cursor:pointer;
-}
-
-/* Dataset Tabs */
-.dataset-tabs {
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-bottom:10px;
-}
-.dataset-tab {
-    padding:6px 12px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.dataset-tab.active {
-    background:white;
-    color:#002f6c;
-}
-
-/* Cluster Tabs */
-.cluster-tabs {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:15px;
-}
-.cluster-tab {
-    padding:8px 16px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.cluster-tab.active {
-    background:white;
-    color:#002f6c;
-}
-
-/* Banner Sections */
-.banner-header {
-    padding:10px;
-    margin-top:10px;
-    background:rgba(255,255,255,0.15);
-    border-radius:6px;
-    cursor:pointer;
-}
-.banner-content {
-    display:none;
-}
-
-/* Table */
-table {
-    width:100%;
-    border-collapse:collapse;
-}
-th,td {
-    padding:10px;
-    text-align:left;
-}
-th { background:#002f6c; }
-td { border-bottom:1px solid rgba(255,255,255,0.1); }
-</style>
-</head>
-
-<body>
-
-<div class="header">
-<h1>4Sight Click Intelligence</h1>
-</div>
-
-<div class="filters">
-<input type="file" id="fileInput">
-<button onclick="upload()">Upload</button>
-<button onclick="clearAll()">Clear All</button>
-</div>
-
-<div id="datasetTabs" class="dataset-tabs"></div>
-
-<div class="cluster-tabs">
-<div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
-<div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
-<div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
-<div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
-</div>
-
-<div id="output"></div>
-
 <script>
 
-let datasets=[];
-let activeDataset=0;
-let activeCluster="CP";
+/* ✅ SAFE VALUE HELPER */
+function getVal(obj, key){
+    return obj[key] || obj[key.trim?.()] || "";
+}
 
-/* ✅ ORIGINAL DATE PARSER (UNCHANGED) */
+/* ✅ FIXED DATE PARSER */
 function parseDate(v){
 
     if(!v) return null;
@@ -134,108 +14,36 @@ function parseDate(v){
         return new Date((v - 25569) * 86400 * 1000);
     }
 
-    let d = new Date(v.replace(/(\\d{2})\\/(\\d{2})\\/(\\d{4})/, "$3-$2-$1"));
+    // Handle multiple formats
+    let d = new Date(v);
+    if(!isNaN(d)) return d;
+
+    d = new Date(v.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1"));
     return isNaN(d) ? null : d;
 }
 
-/* ✅ LOAD SAVED DATA */
-window.onload=()=>{
-    let s=localStorage.getItem("clickDatasets");
-    if(s){
-        datasets=JSON.parse(s);
-        renderDatasetTabs();
-        render();
-    }
-};
-
-/* ✅ UPLOAD (UNCHANGED LOGIC) */
-function upload(){
-
-    let file=fileInput.files[0];
-    if(!file) return;
-
-    let reader=new FileReader();
-
-    reader.onload=(e)=>{
-        let wb=XLSX.read(e.target.result,{type:'array'});
-        let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
-
-        let validDates = data.map(d=>parseDate(d["Time Clicked"]))
-                             .filter(d=>d !== null)
-                             .sort((a,b)=>a-b);
-
-        if(validDates.length === 0){
-            alert("No valid dates found in file.");
-            return;
-        }
-
-        let start = validDates[0].toLocaleDateString();
-        let end = validDates[validDates.length-1].toLocaleDateString();
-
-        let label = start + " → " + end;
-
-        datasets.unshift({label,data});
-
-        localStorage.setItem("clickDatasets",JSON.stringify(datasets));
-
-        renderDatasetTabs();
-        render();
-
-        fileInput.value="";
-    };
-
-    reader.readAsArrayBuffer(file);
-}
-
-/* ✅ CLEAR */
-function clearAll(){
-    localStorage.removeItem("clickDatasets");
-    location.reload();
-}
-
-/* ✅ DATASET TABS (UNCHANGED) */
-function renderDatasetTabs(){
-
-    let html="";
-
-    datasets.forEach((d,i)=>{
-        html+=`<div class="dataset-tab ${i===activeDataset?'active':''}"
-        onclick="setDataset(${i})">${d.label}</div>`;
-    });
-
-    datasetTabs.innerHTML=html;
-}
-
-function setDataset(i){
-    activeDataset=i;
-    renderDatasetTabs();
-    render();
-}
-
-/* ✅ CLUSTERS (EXACT SAME) */
-function setCluster(c){
-    activeCluster=c;
-    document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("c-"+c).classList.add("active");
-    render();
-}
-
-/* ✅ CORE LOGIC UNTOUCHED */
+/* ✅ UPDATED RENDER */
 function render(){
 
     if(!datasets.length) return;
 
     let raw = datasets[activeDataset].data;
 
+    console.log("RAW DATA:", raw); // 👈 debug
+
     let grouped={};
 
     raw.forEach(d=>{
 
-        if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
+        let tracker = getVal(d, "Tracker");
 
-        let banner=d.Template||"Unknown";
-        let email=d.Receiver||"Unknown";
-        let date=parseDate(d["Time Clicked"]);
+        if(["Logo","Facebook","LinkedIn","Youtube"].includes(tracker)) return;
+
+        let banner = getVal(d, "Template") || "Unknown";
+        let email = getVal(d, "Receiver") || "Unknown";
+        let sender = getVal(d, "Sender");
+
+        let date = parseDate(getVal(d, "Time Clicked"));
 
         if(!date) return;
 
@@ -244,7 +52,7 @@ function render(){
         if(!grouped[key]){
             grouped[key]={
                 email,
-                sender:d.Sender,
+                sender,
                 banner,
                 first:date,
                 days:new Set([date.toDateString()])
@@ -256,6 +64,8 @@ function render(){
     });
 
     let final=Object.values(grouped);
+
+    console.log("FINAL:", final); // 👈 debug
 
     final.sort((a,b)=>b.days.size - a.days.size);
 
@@ -273,58 +83,5 @@ function render(){
     renderCluster(clusters[activeCluster]);
 }
 
-/* ✅ DISPLAY */
-function renderCluster(data){
-
-    let banners={};
-
-    data.forEach(d=>{
-        if(!banners[d.banner]) banners[d.banner]=[];
-        banners[d.banner].push(d);
-    });
-
-    let html="";
-
-    Object.keys(banners).forEach(banner=>{
-
-        html+=`
-        <div class="banner-header" onclick="toggle(this)">
-        ${banner}
-        </div>
-
-        <div class="banner-content">
-        <table>
-        <tr>
-            <th>Email</th>
-            <th>Sender</th>
-            <th>Date Clicked</th>
-            <th>Days</th>
-        </tr>`;
-
-        banners[banner].forEach(r=>{
-            html+=`
-            <tr>
-                <td>${r.email}</td>
-                <td>${r.sender}</td>
-                <td>${r.first.toLocaleString()}</td>
-                <td>${r.days.size}</td>
-            </tr>`;
-        });
-
-        html+="</table></div>";
-    });
-
-    output.innerHTML=html;
-}
-
-/* ✅ TOGGLE */
-function toggle(el){
-    let c=el.nextElementSibling;
-    c.style.display=(c.style.display==="block")?"none":"block";
-}
-
 </script>
-
-</body>
-</html>
 ``
