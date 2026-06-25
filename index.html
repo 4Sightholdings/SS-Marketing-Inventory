@@ -15,11 +15,15 @@ body {
 }
 
 /* HEADER */
-.header { text-align:center; }
-.header h1 { font-size:36px; }
+.header { text-align:center; margin-bottom:20px; }
 
-/* FILTERS */
-.filters { display:flex; justify-content:center; gap:10px; margin-bottom:20px; }
+/* BUTTONS */
+.filters {
+    display:flex;
+    justify-content:center;
+    gap:10px;
+    margin-bottom:20px;
+}
 button,input {
     padding:10px;
     border-radius:8px;
@@ -36,7 +40,7 @@ button {
     display:flex;
     gap:8px;
     flex-wrap:wrap;
-    margin-bottom:15px;
+    margin-bottom:10px;
 }
 .dataset-tab {
     padding:6px 12px;
@@ -67,7 +71,7 @@ button {
     color:#002f6c;
 }
 
-/* BANNERS */
+/* DROPDOWN */
 .banner-header {
     padding:10px;
     margin-top:10px;
@@ -83,7 +87,6 @@ button {
 table {
     width:100%;
     border-collapse:collapse;
-    table-layout:fixed;
 }
 th,td {
     padding:10px;
@@ -110,10 +113,10 @@ td { border-bottom:1px solid rgba(255,255,255,0.1); }
 <div id="datasetTabs" class="dataset-tabs"></div>
 
 <div class="cluster-tabs">
-    <div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
-    <div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
-    <div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
-    <div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
+<div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
+<div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
+<div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
+<div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
 </div>
 
 <div id="output"></div>
@@ -124,11 +127,26 @@ let datasets=[];
 let activeDataset=0;
 let activeCluster="CP";
 
-/* LOAD STORAGE */
+/* ✅ FIXED DATE PARSER */
+function parseDate(v){
+
+    if(!v) return null;
+
+    // Case 1: number (Excel serial)
+    if(typeof v === "number"){
+        return new Date((v - 25569) * 86400 * 1000);
+    }
+
+    // Case 2: text (like your file uses)
+    let d = new Date(v.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1"));
+    return isNaN(d) ? null : d;
+}
+
+/* LOAD */
 window.onload=()=>{
-    let saved = localStorage.getItem("clickDatasets");
-    if(saved){
-        datasets = JSON.parse(saved);
+    let s=localStorage.getItem("clickDatasets");
+    if(s){
+        datasets=JSON.parse(s);
         renderDatasetTabs();
         render();
     }
@@ -146,18 +164,21 @@ function upload(){
         let wb=XLSX.read(e.target.result,{type:'array'});
         let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-        // ✅ EXTRACT DATE RANGE
-        let dates = data.map(d=>new Date(d["Time Clicked"]))
-                        .filter(d=>!isNaN(d))
-                        .sort((a,b)=>a-b);
+        let validDates = data.map(d=>parseDate(d["Time Clicked"]))
+                             .filter(d=>d !== null)
+                             .sort((a,b)=>a - b);
 
-        let label="Unknown";
-        if(dates.length){
-            label = dates[0].toLocaleDateString() + " → " +
-                    dates[dates.length-1].toLocaleDateString();
+        if(validDates.length === 0){
+            alert("No valid dates found in file.");
+            return;
         }
 
-        datasets.unshift({label,data}); // newest first
+        let start = validDates[0].toLocaleDateString();
+        let end = validDates[validDates.length-1].toLocaleDateString();
+
+        let label = start + " → " + end;
+
+        datasets.unshift({label, data});
 
         localStorage.setItem("clickDatasets", JSON.stringify(datasets));
 
@@ -186,7 +207,7 @@ function renderDatasetTabs(){
         onclick="setDataset(${i})">${d.label}</div>`;
     });
 
-    document.getElementById("datasetTabs").innerHTML=html;
+    datasetTabs.innerHTML=html;
 }
 
 function setDataset(i){
@@ -195,7 +216,7 @@ function setDataset(i){
     render();
 }
 
-/* CLUSTER SWITCH */
+/* CLUSTER */
 function setCluster(c){
     activeCluster=c;
     document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
@@ -203,13 +224,7 @@ function setCluster(c){
     render();
 }
 
-/* DATE */
-function parseDate(v){
-    let d=new Date(v);
-    return isNaN(d)?null:d;
-}
-
-/* RENDER */
+/* PROCESS */
 function render(){
 
     if(!datasets.length) return;
@@ -219,11 +234,13 @@ function render(){
     let grouped={};
 
     raw.forEach(d=>{
+
         if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
 
         let banner=d.Template||"Unknown";
         let email=d.Receiver||"Unknown";
         let date=parseDate(d["Time Clicked"]);
+
         if(!date) return;
 
         let key=email+"|"+banner;
@@ -242,8 +259,7 @@ function render(){
         }
     });
 
-    let final = Object.values(grouped);
-
+    let final=Object.values(grouped);
     final.sort((a,b)=>b.days.size - a.days.size);
 
     let clusters={CP:[],BE:[],IT:[],OT:[]};
@@ -252,17 +268,18 @@ function render(){
         let t=d.banner.toLowerCase();
         if(t.includes("copilot")||t.includes("partner")) clusters.CP.push(d);
         else if(t.includes("business")) clusters.BE.push(d);
-        else if(t.includes("erp")||t.includes("webinar")) clusters.IT.push(d);
+        else if(t.includes("erp")) clusters.IT.push(d);
         else if(t.includes("ai")||t.includes("stages")) clusters.OT.push(d);
     });
 
     renderCluster(clusters[activeCluster]);
 }
 
-/* RENDER CLUSTER */
+/* RENDER */
 function renderCluster(data){
 
     let banners={};
+
     data.forEach(d=>{
         if(!banners[d.banner]) banners[d.banner]=[];
         banners[d.banner].push(d);
@@ -274,7 +291,7 @@ function renderCluster(data){
 
         html+=`
         <div class="banner-header" onclick="toggle(this)">
-            ${banner}
+        ${banner}
         </div>
 
         <div class="banner-content">
@@ -299,7 +316,7 @@ function renderCluster(data){
         html+="</table></div>";
     });
 
-    document.getElementById("output").innerHTML=html;
+    output.innerHTML=html;
 }
 
 /* DROPDOWN */
