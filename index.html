@@ -14,84 +14,44 @@ body {
     padding:20px;
 }
 
-/* HEADER */
 .header { text-align:center; margin-bottom:20px; }
 
-/* BUTTONS */
-.filters {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:20px;
-}
 button,input {
     padding:10px;
     border-radius:8px;
     border:none;
 }
+
 button {
     background:#0078d4;
     color:white;
     cursor:pointer;
+    margin:5px;
 }
 
-/* DATASET TABS */
-.dataset-tabs {
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    margin-bottom:10px;
-}
-.dataset-tab {
-    padding:6px 12px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.dataset-tab.active {
-    background:white;
-    color:#002f6c;
+.card {
+    background:rgba(255,255,255,0.1);
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
 }
 
-/* CLUSTER TABS */
-.cluster-tabs {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:15px;
-}
-.cluster-tab {
-    padding:8px 16px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.cluster-tab.active {
-    background:white;
-    color:#002f6c;
+.metric {
+    font-size:28px;
+    font-weight:bold;
+    color:#00e5ff;
 }
 
-/* DROPDOWN */
-.banner-header {
-    padding:10px;
-    margin-top:10px;
-    background:rgba(255,255,255,0.15);
-    border-radius:6px;
-    cursor:pointer;
-}
-.banner-content {
-    display:none;
-}
-
-/* TABLE */
 table {
     width:100%;
     border-collapse:collapse;
 }
+
 th,td {
     padding:10px;
     text-align:left;
 }
+
 th { background:#002f6c; }
 td { border-bottom:1px solid rgba(255,255,255,0.1); }
 
@@ -101,231 +61,120 @@ td { border-bottom:1px solid rgba(255,255,255,0.1); }
 <body>
 
 <div class="header">
-<h1>4Sight Click Intelligence</h1>
+<h1>🚀 4Sight Click Intelligence Dashboard</h1>
 </div>
 
-<div class="filters">
+<div>
 <input type="file" id="fileInput">
-<button onclick="upload()">Upload</button>
-<button onclick="clearAll()">Clear All</button>
+<button onclick="upload()">Upload Excel</button>
+<button onclick="clearData()">Clear Data</button>
 </div>
 
-<div id="datasetTabs" class="dataset-tabs"></div>
-
-<div class="cluster-tabs">
-<div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
-<div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
-<div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
-<div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
+<div class="card">
+<h2>Total Clicks</h2>
+<div id="totalClicks" class="metric">0</div>
 </div>
 
-<div id="output"></div>
+<div class="card">
+<h2>Top Clicked URLs</h2>
+<div id="topUrls"></div>
+</div>
+
+<div class="card">
+<h2>Click Data</h2>
+<table id="table"></table>
+</div>
 
 <script>
 
-let datasets=[];
-let activeDataset=0;
-let activeCluster="CP";
+let data = [];
 
-/* ✅ FIXED DATE PARSER */
-function parseDate(v){
-
-    if(!v) return null;
-
-    // Case 1: number (Excel serial)
-    if(typeof v === "number"){
-        return new Date((v - 25569) * 86400 * 1000);
-    }
-
-    // Case 2: text (like your file uses)
-    let d = new Date(v.replace(/(\d{2})\/(\d{2})\/(\d{4})/, "$3-$2-$1"));
-    return isNaN(d) ? null : d;
-}
-
-/* LOAD */
-window.onload=()=>{
-    let s=localStorage.getItem("clickDatasets");
-    if(s){
-        datasets=JSON.parse(s);
-        renderDatasetTabs();
+/* ✅ Auto-load data */
+window.onload = () => {
+    let saved = localStorage.getItem("clickData");
+    if(saved){
+        data = JSON.parse(saved);
         render();
     }
 };
 
-/* UPLOAD */
+/* ✅ Upload Excel */
 function upload(){
 
-    let file=fileInput.files[0];
+    let file = fileInput.files[0];
     if(!file) return;
 
-    let reader=new FileReader();
+    let reader = new FileReader();
 
-    reader.onload=(e)=>{
-        let wb=XLSX.read(e.target.result,{type:'array'});
-        let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    reader.onload = (e) => {
+        let wb = XLSX.read(e.target.result, {type:'array'});
+        data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-        let validDates = data.map(d=>parseDate(d["Time Clicked"]))
-                             .filter(d=>d !== null)
-                             .sort((a,b)=>a - b);
+        localStorage.setItem("clickData", JSON.stringify(data));
 
-        if(validDates.length === 0){
-            alert("No valid dates found in file.");
-            return;
-        }
-
-        let start = validDates[0].toLocaleDateString();
-        let end = validDates[validDates.length-1].toLocaleDateString();
-
-        let label = start + " → " + end;
-
-        datasets.unshift({label, data});
-
-        localStorage.setItem("clickDatasets", JSON.stringify(datasets));
-
-        renderDatasetTabs();
         render();
-
-        fileInput.value="";
     };
 
     reader.readAsArrayBuffer(file);
 }
 
-/* CLEAR */
-function clearAll(){
-    localStorage.removeItem("clickDatasets");
+/* ✅ Clear */
+function clearData(){
+    localStorage.removeItem("clickData");
     location.reload();
 }
 
-/* DATASET TABS */
-function renderDatasetTabs(){
-
-    let html="";
-
-    datasets.forEach((d,i)=>{
-        html+=`<div class="dataset-tab ${i===activeDataset?'active':''}"
-        onclick="setDataset(${i})">${d.label}</div>`;
-    });
-
-    datasetTabs.innerHTML=html;
-}
-
-function setDataset(i){
-    activeDataset=i;
-    renderDatasetTabs();
-    render();
-}
-
-/* CLUSTER */
-function setCluster(c){
-    activeCluster=c;
-    document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("c-"+c).classList.add("active");
-    render();
-}
-
-/* PROCESS */
+/* ✅ Render dashboard */
 function render(){
 
-    if(!datasets.length) return;
+    document.getElementById("totalClicks").innerText = data.length;
 
-    let raw = datasets[activeDataset].data;
-
-    let grouped={};
-
-    raw.forEach(d=>{
-
-        if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
-
-        let banner=d.Template||"Unknown";
-        let email=d.Receiver||"Unknown";
-        let date=parseDate(d["Time Clicked"]);
-
-        if(!date) return;
-
-        let key=email+"|"+banner;
-
-        if(!grouped[key]){
-            grouped[key]={
-                email,
-                sender:d.Sender,
-                banner,
-                first:date,
-                days:new Set([date.toDateString()])
-            };
-        } else {
-            if(date < grouped[key].first) grouped[key].first=date;
-            grouped[key].days.add(date.toDateString());
-        }
-    });
-
-    let final=Object.values(grouped);
-    final.sort((a,b)=>b.days.size - a.days.size);
-
-    let clusters={CP:[],BE:[],IT:[],OT:[]};
-
-    final.forEach(d=>{
-        let t=d.banner.toLowerCase();
-        if(t.includes("copilot")||t.includes("partner")) clusters.CP.push(d);
-        else if(t.includes("business")) clusters.BE.push(d);
-        else if(t.includes("erp")) clusters.IT.push(d);
-        else if(t.includes("ai")||t.includes("stages")) clusters.OT.push(d);
-    });
-
-    renderCluster(clusters[activeCluster]);
-}
-
-/* RENDER */
-function renderCluster(data){
-
-    let banners={};
+    /* ✅ Top URLs */
+    let counts = {};
 
     data.forEach(d=>{
-        if(!banners[d.banner]) banners[d.banner]=[];
-        banners[d.banner].push(d);
+        let url = d["Tracker"];
+        if(!url) return;
+
+        counts[url] = (counts[url] || 0) + 1;
     });
 
-    let html="";
+    let top = Object.entries(counts)
+        .sort((a,b)=>b[1]-a[1])
+        .slice(0,5);
 
-    Object.keys(banners).forEach(banner=>{
+    let topHtml = "";
 
-        html+=`
-        <div class="banner-header" onclick="toggle(this)">
-        ${banner}
-        </div>
+    top.forEach(([url,count])=>{
+        topHtml += `<div>${url} (${count})</div>`;
+    });
 
-        <div class="banner-content">
-        <table>
+    document.getElementById("topUrls").innerHTML = topHtml;
+
+    /* ✅ Table */
+    let table = `
+    <tr>
+        <th>Email</th>
+        <th>Sender</th>
+        <th>Template</th>
+        <th>Time Clicked</th>
+    </tr>`;
+
+    data.slice(0,50).forEach(d=>{
+        table += `
         <tr>
-            <th>Email</th>
-            <th>Sender</th>
-            <th>Date Clicked</th>
-            <th>Days</th>
+            <td>${d["Receiver"]||""}</td>
+            <td>${d["Sender"]||""}</td>
+            <td>${d["Template"]||""}</td>
+            <td>${d["Time Clicked"]||""}</td>
         </tr>`;
-
-        banners[banner].forEach(r=>{
-            html+=`
-            <tr>
-                <td>${r.email}</td>
-                <td>${r.sender}</td>
-                <td>${r.first.toLocaleString()}</td>
-                <td>${r.days.size}</td>
-            </tr>`;
-        });
-
-        html+="</table></div>";
     });
 
-    output.innerHTML=html;
-}
-
-/* DROPDOWN */
-function toggle(el){
-    let c=el.nextElementSibling;
-    c.style.display=(c.style.display==="block")?"none":"block";
+    document.getElementById("table").innerHTML = table;
 }
 
 </script>
 
 </body>
 </html>
+``
