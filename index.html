@@ -1,8 +1,10 @@
 <!DOCTYPE html>
-<meta charset="UTF-8"><html>
+<html>
+<head>
+<meta charset="UTF-8">
 <title>4Sight Click Intelligence</title>
 
-<!-- ✅ CORRECT SCRIPT (THIS FIXES YOUR TOP TEXT ISSUE) -->
+<!-- ✅ FIXED SCRIPT -->
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <style>
@@ -52,10 +54,7 @@ button {
     width:150px;
     text-align:center;
 }
-.value {
-    font-size:22px;
-    font-weight:bold;
-}
+.value { font-size:22px; font-weight:bold; }
 
 /* TABS */
 .tabs {
@@ -70,10 +69,7 @@ button {
     background:rgba(255,255,255,0.2);
     cursor:pointer;
 }
-.tab.active {
-    background:white;
-    color:#002f6c;
-}
+.tab.active { background:white; color:#002f6c; }
 
 /* CLUSTER */
 .cluster { display:none; }
@@ -89,15 +85,22 @@ button {
 .it { background:#ffd633; color:black; }
 .ot { background:#33cc99; }
 
-/* GROUP BLOCK */
-.banner-block {
-    margin-top:12px;
-    padding:12px;
-    border-radius:8px;
-    background:rgba(255,255,255,0.08);
+/* ✅ ACCORDION BANNERS */
+.banner-header {
+    background:rgba(255,255,255,0.15);
+    padding:10px;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:10px;
+    font-weight:bold;
 }
 
-/* ✅ TABLE ALIGNMENT FIX */
+.banner-content {
+    display:none;
+    padding:10px;
+}
+
+/* TABLE */
 table {
     width:100%;
     border-collapse:collapse;
@@ -117,11 +120,12 @@ td {
     border-bottom:1px solid rgba(255,255,255,0.1);
 }
 
-/* Fixed column widths */
+/* Column widths */
 th:nth-child(1), td:nth-child(1) { width:35%; }
 th:nth-child(2), td:nth-child(2) { width:25%; }
 th:nth-child(3), td:nth-child(3) { width:25%; }
 th:nth-child(4), td:nth-child(4) { width:15%; }
+
 </style>
 </head>
 
@@ -156,9 +160,8 @@ th:nth-child(4), td:nth-child(4) { width:15%; }
 
 <script>
 
-let rawData = [];
+let rawData=[];
 
-// LOAD FILE
 fileInput.addEventListener("change", e=>{
     let reader=new FileReader();
 
@@ -170,7 +173,6 @@ fileInput.addEventListener("change", e=>{
     reader.readAsArrayBuffer(e.target.files[0]);
 });
 
-// SWITCH TABS
 function showCluster(c){
     document.querySelectorAll(".cluster").forEach(x=>x.classList.remove("active"));
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
@@ -178,41 +180,25 @@ function showCluster(c){
     document.getElementById("tab-"+c).classList.add("active");
 }
 
-// ✅ FIXED DATE (handles decimals properly)
+/* ✅ PERFECT DATE HANDLER */
 function parseExcelDate(value){
 
+    if(!value) return null;
+
     if(typeof value === "number"){
-        let utc_days = Math.floor(value - 25569);
-        let utc_value = utc_days * 86400;                                        
-        let date_info = new Date(utc_value * 1000);
-
-        let fractional_day = value - Math.floor(value);
-        let total_seconds = Math.floor(86400 * fractional_day);
-
-        let seconds = total_seconds % 60;
-        total_seconds -= seconds;
-
-        let hours = Math.floor(total_seconds / (60 * 60));
-        let minutes = Math.floor(total_seconds / 60) % 60;
-
-        date_info.setHours(hours);
-        date_info.setMinutes(minutes);
-        date_info.setSeconds(seconds);
-
-        return date_info;
+        return new Date((value - 25569) * 86400 * 1000);
     }
 
     let d = new Date(value);
     return isNaN(d) ? null : d;
 }
 
-// MAIN PROCESS
+/* MAIN */
 function processData(){
 
     if(rawData.length === 0) return;
 
-    // ✅ clear file input after processing
-    fileInput.value = "";
+    fileInput.value=""; // ✅ clear file
 
     let clean = rawData.filter(d =>
         !["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)
@@ -222,14 +208,13 @@ function processData(){
 
     clean.forEach(d=>{
 
-        let banner=d.Template || "Unknown";
-        let email=d.Receiver || "Unknown";
+        let banner=d.Template||"Unknown";
+        let email=d.Receiver||"Unknown";
 
         let date=parseExcelDate(d["Time Clicked"]);
         if(!date) return;
 
         let key=email+"|"+banner;
-        let day=date.toISOString().split("T")[0];
 
         if(!grouped[key]){
             grouped[key]={
@@ -237,13 +222,13 @@ function processData(){
                 sender:d.Sender,
                 banner,
                 first:date,
-                days:new Set([day])
+                days:new Set([date.toDateString()])
             };
         } else {
             if(date < grouped[key].first){
                 grouped[key].first=date;
             }
-            grouped[key].days.add(day);
+            grouped[key].days.add(date.toDateString());
         }
     });
 
@@ -257,14 +242,10 @@ function processData(){
     final.forEach(d=>{
         let t=d.banner.toLowerCase();
 
-        if(t.includes("copilot") || t.includes("partner") || t.includes("channel"))
-            clusters.CP.push(d);
-        else if(t.includes("business") || t.includes("software"))
-            clusters.BE.push(d);
-        else if(t.includes("erp") || t.includes("webinar") || t.includes("sei"))
-            clusters.IT.push(d);
-        else if(t.includes("stages") || t.includes("ai"))
-            clusters.OT.push(d);
+        if(t.includes("copilot")||t.includes("partner")||t.includes("channel")) clusters.CP.push(d);
+        else if(t.includes("business")||t.includes("software")) clusters.BE.push(d);
+        else if(t.includes("erp")||t.includes("webinar")||t.includes("sei")) clusters.IT.push(d);
+        else if(t.includes("stages")||t.includes("ai")) clusters.OT.push(d);
     });
 
     render("cpTable",clusters.CP);
@@ -273,10 +254,11 @@ function processData(){
     render("otTable",clusters.OT);
 }
 
-// RENDER
+/* ✅ ACCORDION RENDER */
 function render(id,data){
 
     let banners={};
+
     data.forEach(d=>{
         if(!banners[d.banner]) banners[d.banner]=[];
         banners[d.banner].push(d);
@@ -285,10 +267,13 @@ function render(id,data){
     let html="";
 
     Object.keys(banners).forEach(banner=>{
-        html+=`
-        <div class="banner-block">
-        <h3>${banner}</h3>
 
+        html+=`
+        <div class="banner-header" onclick="toggle(this)">
+        ${banner}
+        </div>
+
+        <div class="banner-content">
         <table>
         <tr>
             <th>Email</th>
@@ -313,8 +298,14 @@ function render(id,data){
     document.getElementById(id).innerHTML=html;
 }
 
+/* ✅ TOGGLE */
+function toggle(el){
+    let content = el.nextElementSibling;
+    content.style.display = (content.style.display === "block") ? "none" : "block";
+}
+
 </script>
 
 </body>
 </html>
-<head>
+``
