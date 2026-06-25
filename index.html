@@ -18,7 +18,7 @@ body {
 .header { text-align:center; }
 .header h1 { font-size:36px; }
 
-/* FILTER */
+/* BUTTONS */
 .filters {
     display:flex;
     justify-content:center;
@@ -30,71 +30,73 @@ button,input {
     border-radius:8px;
     border:none;
 }
-
 button {
     background:#0078d4;
     color:white;
     cursor:pointer;
 }
 
-/* WEEK TABS */
-.week-tabs {
+/* DATASET TABS */
+.dataset-tabs {
     display:flex;
+    justify-content:flex-start;
     gap:10px;
-    justify-content:center;
-    margin-bottom:15px;
+    margin-bottom:10px;
+    flex-wrap:wrap;
 }
-.week-tab {
-    padding:8px 12px;
+.dataset-tab {
+    padding:6px 12px;
     background:rgba(255,255,255,0.2);
     border-radius:6px;
     cursor:pointer;
 }
-.week-tab.active {
+.dataset-tab.active {
     background:white;
     color:#002f6c;
 }
 
-/* CLUSTERS */
-.cluster-title {
-    padding:10px;
-    border-radius:6px;
-    margin-top:10px;
+/* CLUSTER TABS */
+.clusters {
+    display:flex;
+    justify-content:center;
+    gap:8px;
+    margin-bottom:15px;
 }
-
-.cp { background:#ff4d4d; }
-.be { background:#4da6ff; }
-.it { background:#ffd633; color:black; }
-.ot { background:#33cc99; }
-
-/* DROPDOWN */
-.banner-header {
+.cluster-tab {
+    padding:8px 16px;
+    background:rgba(255,255,255,0.2);
+    border-radius:6px;
     cursor:pointer;
-    margin-top:10px;
-    background:rgba(255,255,255,0.15);
-    padding:10px;
-    border-radius:6px;
+}
+.cluster-tab.active {
+    background:white;
+    color:#002f6c;
 }
 
+/* CONTENT */
+.banner-header {
+    margin-top:10px;
+    padding:10px;
+    background:rgba(255,255,255,0.15);
+    border-radius:6px;
+    cursor:pointer;
+}
 .banner-content {
     display:none;
+    padding:10px;
 }
 
-/* TABLE */
 table {
     width:100%;
     border-collapse:collapse;
 }
 th,td {
-    padding:10px;
+    padding:8px;
     text-align:left;
 }
-th {
-    background:#002f6c;
-}
-td {
-    border-bottom:1px solid rgba(255,255,255,0.1);
-}
+th { background:#002f6c; }
+td { border-bottom:1px solid rgba(255,255,255,0.1); }
+
 </style>
 </head>
 
@@ -106,54 +108,68 @@ td {
 
 <div class="filters">
 <input type="file" id="fileInput">
-<button onclick="uploadData()">Upload Week</button>
-<button onclick="clearAll()">Clear All</button>
+<button onclick="upload()">Upload</button>
+<button onclick="clearAll()">Clear</button>
 </div>
 
-<div id="weekTabs" class="week-tabs"></div>
+<div id="datasetTabs" class="dataset-tabs"></div>
+
+<div class="clusters">
+<div class="cluster-tab active" onclick="switchCluster('CP')" id="c-CP">CP</div>
+<div class="cluster-tab" onclick="switchCluster('BE')" id="c-BE">BE</div>
+<div class="cluster-tab" onclick="switchCluster('IT')" id="c-IT">IT</div>
+<div class="cluster-tab" onclick="switchCluster('OT')" id="c-OT">OT</div>
+</div>
 
 <div id="output"></div>
 
 <script>
 
-let datasets = [];
-let activeIndex = 0;
+let datasets=[];
+let activeDataset=0;
+let activeCluster="CP";
 
 /* LOAD STORAGE */
-window.onload = function(){
-    let saved = localStorage.getItem("clickDatasets");
-    if(saved){
-        datasets = JSON.parse(saved);
+window.onload=()=>{
+    let s=localStorage.getItem("clickDB");
+    if(s){
+        datasets=JSON.parse(s);
         renderTabs();
-        renderData(activeIndex);
+        render();
     }
 };
 
-/* FILE UPLOAD */
-function uploadData(){
+/* UPLOAD */
+function upload(){
 
-    let file = document.getElementById("fileInput").files[0];
+    let file=fileInput.files[0];
     if(!file) return;
 
-    let reader = new FileReader();
+    let reader=new FileReader();
 
-    reader.onload = function(e){
-        let wb = XLSX.read(e.target.result,{type:'array'});
-        let data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+    reader.onload=(e)=>{
+        let wb=XLSX.read(e.target.result,{type:'array'});
+        let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
 
-        let label = "Week " + (datasets.length + 1);
+        let dates=data.map(d=>new Date(d["Time Clicked"]))
+                      .filter(d=>!isNaN(d))
+                      .sort((a,b)=>a-b);
 
-        datasets.push({
-            label,
-            raw:data
-        });
+        let label="Unknown Dates";
+        if(dates.length){
+            let start=dates[0].toLocaleDateString();
+            let end=dates[dates.length-1].toLocaleDateString();
+            label=start+" → "+end;
+        }
 
-        localStorage.setItem("clickDatasets", JSON.stringify(datasets));
+        datasets.unshift({label,data}); // newest first
+
+        localStorage.setItem("clickDB",JSON.stringify(datasets));
 
         renderTabs();
-        renderData(datasets.length - 1);
+        render();
 
-        document.getElementById("fileInput").value = "";
+        fileInput.value="";
     };
 
     reader.readAsArrayBuffer(file);
@@ -161,50 +177,56 @@ function uploadData(){
 
 /* CLEAR */
 function clearAll(){
-    localStorage.removeItem("clickDatasets");
+    localStorage.removeItem("clickDB");
     location.reload();
 }
 
-/* TABS */
+/* DATASET TABS */
 function renderTabs(){
-
-    let html = "";
-
+    let html="";
     datasets.forEach((d,i)=>{
-        html += `<div class="week-tab ${i===activeIndex?'active':''}" 
-        onclick="renderData(${i})">${d.label}</div>`;
+        html+=`<div class="dataset-tab ${i===activeDataset?'active':''}" onclick="setDataset(${i})">
+        ${d.label}
+        </div>`;
     });
-
-    document.getElementById("weekTabs").innerHTML = html;
+    datasetTabs.innerHTML=html;
 }
 
-/* DATE FIX */
-function parseDate(val){
-    if(typeof val === "number"){
-        return new Date((val-25569)*86400*1000);
-    }
-    let d = new Date(val);
+function setDataset(i){
+    activeDataset=i;
+    renderTabs();
+    render();
+}
+
+/* CLUSTER SWITCH */
+function switchCluster(c){
+    activeCluster=c;
+    document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
+    document.getElementById("c-"+c).classList.add("active");
+    render();
+}
+
+/* DATE PARSE */
+function parseDate(v){
+    let d=new Date(v);
     return isNaN(d)?null:d;
 }
 
-/* PROCESS + RENDER */
-function renderData(index){
+/* PROCESS */
+function render(){
 
-    activeIndex = index;
-    renderTabs();
+    if(!datasets.length) return;
 
-    let rawData = datasets[index].raw;
+    let raw=datasets[activeDataset].data;
 
-    let grouped = {};
+    let grouped={};
 
-    rawData.forEach(d=>{
-
+    raw.forEach(d=>{
         if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
 
         let banner=d.Template||"Unknown";
         let email=d.Receiver||"Unknown";
         let date=parseDate(d["Time Clicked"]);
-
         if(!date) return;
 
         let key=email+"|"+banner;
@@ -218,15 +240,14 @@ function renderData(index){
                 days:new Set([date.toDateString()])
             };
         } else {
-            if(date < grouped[key].first) grouped[key].first = date;
+            if(date < grouped[key].first) grouped[key].first=date;
             grouped[key].days.add(date.toDateString());
         }
     });
 
-    let final = Object.values(grouped);
+    let final=Object.values(grouped);
 
-    // ✅ sort by engagement
-    final.sort((a,b)=>b.days.size - a.days.size);
+    final.sort((a,b)=>b.days.size-a.days.size);
 
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
@@ -238,23 +259,19 @@ function renderData(index){
         else if(t.includes("ai")||t.includes("stages")) clusters.OT.push(d);
     });
 
-    renderCluster("Channel Partner",clusters.CP,"cp");
-    renderCluster("Business Environment",clusters.BE,"be");
-    renderCluster("Information Technology",clusters.IT,"it");
-    renderCluster("Operational Technology",clusters.OT,"ot");
+    renderCluster(clusters[activeCluster]);
 }
 
-/* RENDER CLUSTERS */
-function renderCluster(title,data,className){
+/* RENDER CLUSTER */
+function renderCluster(data){
 
     let banners={};
-
     data.forEach(d=>{
         if(!banners[d.banner]) banners[d.banner]=[];
         banners[d.banner].push(d);
     });
 
-    let html=`<div class="cluster-title ${className}">${title}</div>`;
+    let html="";
 
     Object.keys(banners).forEach(banner=>{
 
@@ -285,13 +302,13 @@ function renderCluster(title,data,className){
         html+="</table></div>";
     });
 
-    document.getElementById("output").innerHTML += html;
+    output.innerHTML=html;
 }
 
 /* DROPDOWN */
 function toggle(el){
-    let c = el.nextElementSibling;
-    c.style.display = (c.style.display==="block")?"none":"block";
+    let c=el.nextElementSibling;
+    c.style.display=(c.style.display==="block")?"none":"block";
 }
 
 </script>
