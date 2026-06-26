@@ -7,59 +7,49 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <style>
-
 body {
     font-family: Segoe UI;
-    background:#0f2f63;
+    background:#102f66;
     color:white;
     margin:0;
-    padding:0;
 }
 
-/* MAIN CONTAINER */
 .container {
-    padding:30px 40px;
+    padding:30px;
 }
 
-/* HEADER */
 h1 {
-    font-weight:500;
     margin-bottom:20px;
+    font-weight:500;
 }
 
-/* BUTTON BAR */
+/* CONTROLS */
 .controls {
     display:flex;
     align-items:center;
     gap:10px;
-    margin-bottom:30px;
-}
-
-button,
-input {
-    padding:10px 12px;
-    border-radius:6px;
-    border:none;
-    font-size:14px;
+    margin-bottom:20px;
 }
 
 button {
+    padding:8px 14px;
+    border:none;
+    border-radius:6px;
     background:#1e88e5;
     color:white;
     cursor:pointer;
 }
 
-/* CLUSTER BUTTONS */
+/* CLUSTERS */
 .cluster-tabs {
-    margin-bottom:30px;
+    margin-bottom:20px;
 }
 
 .cluster-tab {
-    display:inline-block;
-    padding:10px 18px;
-    margin-right:10px;
+    padding:8px 14px;
+    margin-right:8px;
     background:#2c4fa3;
-    border-radius:10px;
+    border-radius:8px;
     cursor:pointer;
 }
 
@@ -68,51 +58,43 @@ button {
     color:#002f6c;
 }
 
-/* CARD CONTAINER */
+/* CARD */
 .card {
-    background:#173a78;
-    border-radius:14px;
+    background:#163a78;
     padding:20px;
+    border-radius:12px;
 }
 
-/* GROUP BLOCK */
+/* GROUPS */
 .group {
-    background:#1a4488;
-    border-radius:10px;
-    margin-bottom:15px;
+    background:#1b4a96;
+    border-radius:8px;
+    margin-bottom:12px;
 }
 
-/* GROUP HEADER */
 .group-header {
-    padding:14px;
-    font-size:16px;
-    border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:12px;
     cursor:pointer;
 }
 
-/* TABLE AREA */
 .group-content {
     display:none;
-    padding:15px;
+    padding:10px;
 }
 
-/* TABLE */
 table {
     width:100%;
-    border-collapse:collapse;
 }
 
 th {
-    text-align:left;
-    padding:10px;
     background:#123265;
+    padding:8px;
 }
 
 td {
-    padding:8px;
+    padding:6px;
     border-bottom:1px solid rgba(255,255,255,0.1);
 }
-
 </style>
 </head>
 
@@ -210,6 +192,8 @@ function render(){
 
     data.forEach(d=>{
 
+        if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
+
         let banner=d.Template||"Unknown";
         let email=d.Receiver||"Unknown";
         let sender=d.Sender||"";
@@ -235,27 +219,87 @@ function render(){
     let final=Object.values(grouped);
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
+    /* ✅ HARD MATCH CLUSTERING */
     final.forEach(d=>{
-        let t=d.banner.toLowerCase();
 
-        if(t.includes("copilot")||t.includes("reseller")||t.includes("event_")||t.includes("expo")){
+        const t = d.banner.toLowerCase();
+
+        /* EXCLUDE */
+        if(
+            t.includes("nps") ||
+            t.includes("brochure") ||
+            t.includes("download") ||
+            t.includes("holiday") ||
+            t.includes("support")
+        ){
+            return;
+        }
+
+        /* CP */
+        if(
+            t.includes("copilot") ||
+            t.includes("reseller") ||
+            t.includes("cloud champion") ||
+            t.includes("partner summit") ||
+            t.includes("blitz") ||
+            t.includes("maas") ||
+            t.includes("marketplace") ||
+            t.includes("summit") ||
+            t.includes("expo") ||
+            t.includes("event_")
+        ){
             clusters.CP.push(d);
         }
-        else if(t.includes("business")||t.includes("dev")||t.includes("data")){
+
+        /* BE */
+        else if(
+            t.includes("be_") ||
+            t.includes("business") ||
+            t.includes("dev") ||
+            t.includes("data") ||
+            t.includes("esg") ||
+            t.includes("acm") ||
+            t.includes("mde") ||
+            t.includes("citizen") ||
+            t.includes("4adopt")
+        ){
             clusters.BE.push(d);
         }
-        else if(t.includes("erp")||t.includes("acumatica")||t.includes("dynamics")){
+
+        /* IT */
+        else if(
+            t.includes("erp") ||
+            t.includes("acumatica") ||
+            t.includes("dynamics") ||
+            t.includes("f&o") ||
+            t.includes("sei") ||
+            t.includes("fixed asset")
+        ){
             clusters.IT.push(d);
         }
-        else{
+
+        /* OT */
+        else if(
+            t.includes("simio") ||
+            t.includes("automation") ||
+            t.includes("optimisation") ||
+            t.includes("simulation") ||
+            t.includes("opx")
+        ){
             clusters.OT.push(d);
         }
+
+        /* FALLBACK */
+        else{
+            clusters.BE.push(d);
+        }
+
     });
 
     renderCluster(clusters[activeCluster]);
 }
 
-/* GROUP VIEW */
+/* DISPLAY */
 function renderCluster(data){
 
     let banners={};
