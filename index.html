@@ -1,348 +1,69 @@
-<!DOCTYPE html>
-<html>
-<head>
-<meta charset="UTF-8">
-<title>4Sight Click Intelligence</title>
+final.forEach(d=>{
 
-<script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    const t = d.banner.toLowerCase();
 
-<style>
-body {
-    font-family: Segoe UI;
-    background: radial-gradient(circle at top,#0a2a5e,#001833 80%);
-    color:white;
-    padding:20px;
-}
-
-.header { text-align:center; margin-bottom:20px; }
-
-.filters {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:20px;
-}
-
-button,input {
-    padding:10px;
-    border-radius:8px;
-    border:none;
-}
-button {
-    background:#0078d4;
-    color:white;
-    cursor:pointer;
-}
-
-/* ✅ DATASET TABS */
-.dataset-tabs {
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin-bottom:20px;
-}
-.dataset-tab {
-    padding:6px 12px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.dataset-tab.active {
-    background:white;
-    color:#002f6c;
-}
-
-/* CLUSTERS */
-.cluster-tabs {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:15px;
-}
-
-.cluster-tab {
-    padding:8px 16px;
-    background:rgba(255,255,255,0.2);
-    border-radius:6px;
-    cursor:pointer;
-}
-.cluster-tab.active {
-    background:white;
-    color:#002f6c;
-}
-
-/* DATA VIEW */
-.banner-header {
-    padding:12px;
-    margin-top:10px;
-    background:rgba(255,255,255,0.15);
-    border-radius:6px;
-    cursor:pointer;
-    font-size:16px;
-}
-
-.banner-content { display:none; }
-
-table {
-    width:100%;
-    border-collapse:collapse;
-}
-
-th,td {
-    padding:10px;
-}
-
-th { background:#002f6c; }
-td { border-bottom:1px solid rgba(255,255,255,0.1); }
-</style>
-</head>
-
-<body>
-
-<div class="header">
-<h1>4Sight Click Intelligence</h1>
-</div>
-
-<div class="filters">
-<input type="file" id="fileInput">
-<button onclick="upload()">Upload</button>
-<button onclick="clearAll()">Clear All</button>
-</div>
-
-<!-- ✅ DATASET HISTORY -->
-<div id="datasetTabs" class="dataset-tabs"></div>
-
-<!-- CLUSTERS -->
-<div class="cluster-tabs">
-<div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
-<div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
-<div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
-<div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
-</div>
-
-<div id="output"></div>
-
-<script>
-
-let datasets = [];
-let activeDataset = 0;
-let activeCluster = "CP";
-
-/* ✅ LOAD STORED */
-window.onload = () => {
-    let s = localStorage.getItem("clickDatasets");
-    if(s){
-        datasets = JSON.parse(s);
-        renderDatasetTabs();
-        render();
-    }
-};
-
-/* ✅ UPLOAD */
-function upload(){
-
-    let file = fileInput.files[0];
-    if(!file){
-        alert("Select a file");
+    /* ✅ EXCLUDE NON-CAMPAIGNS */
+    if(
+        t.includes("nps") ||
+        t.includes("brochure") ||
+        t.includes("download") ||
+        t.includes("holiday") ||
+        t.includes("support")
+    ){
         return;
     }
 
-    let reader = new FileReader();
+    /* ✅ CP */
+    if(
+        t.includes("copilot") ||
+        t.includes("reseller") ||
+        t.includes("cloud champion") ||
+        t.includes("partner summit") ||
+        t.includes("event") ||
+        t.includes("expo")
+    ){
+        clusters.CP.push(d);
+    }
 
-    reader.onload = function(e){
+    /* ✅ BE */
+    else if(
+        t.includes("business") ||
+        t.includes("data") ||
+        t.includes("dev") ||
+        t.includes("esg") ||
+        t.includes("acm") ||
+        t.includes("mde") ||
+        t.includes("citizen") ||
+        t.includes("marketplace")
+    ){
+        clusters.BE.push(d);
+    }
 
-        let wb = XLSX.read(e.target.result,{type:'array'});
-        let sheet = wb.Sheets[wb.SheetNames[0]];
+    /* ✅ IT */
+    else if(
+        t.includes("erp") ||
+        t.includes("acumatica") ||
+        t.includes("dynamics") ||
+        t.includes("f&o") ||
+        t.includes("sei")
+    ){
+        clusters.IT.push(d);
+    }
 
-        let json = XLSX.utils.sheet_to_json(sheet, {
-            defval: "",
-            raw: false
-        });
+    /* ✅ OT (STRICT) */
+    else if(
+        t.includes("simio") ||
+        t.includes("automation") ||
+        t.includes("optimisation") ||
+        t.includes("simulation") ||
+        t.includes("opx")
+    ){
+        clusters.OT.push(d);
+    }
 
-        if(json.length === 0){
-            alert("No usable data found");
-            return;
-        }
+    /* ✅ SAFE FALLBACK */
+    else {
+        clusters.BE.push(d);
+    }
 
-        // ✅ CLEAN KEYS
-        let data = json.map(r=>{
-            let clean = {};
-            Object.keys(r).forEach(k=>{
-                clean[k.trim()] = r[k];
-            });
-            return clean;
-        });
-
-        // ✅ CREATE LABEL (DATE RANGE)
-        let dates = data.map(d=>new Date(d["Time Clicked"]))
-                        .filter(d=>!isNaN(d))
-                        .sort((a,b)=>a-b);
-
-        let label = file.name;
-        if(dates.length){
-            label = dates[0].toLocaleDateString() + " → " + dates[dates.length-1].toLocaleDateString();
-        }
-
-        datasets.unshift({ label, data });
-
-        localStorage.setItem("clickDatasets", JSON.stringify(datasets));
-
-        activeDataset = 0;
-
-        renderDatasetTabs();
-        render();
-    };
-
-    reader.readAsArrayBuffer(file);
-}
-
-/* ✅ CLEAR ALL */
-function clearAll(){
-    localStorage.removeItem("clickDatasets");
-    location.reload();
-}
-
-/* ✅ DATASET TABS */
-function renderDatasetTabs(){
-
-    let html = "";
-
-    datasets.forEach((d,i)=>{
-        html += `
-        <div class="dataset-tab ${i===activeDataset?'active':''}"
-        onclick="setDataset(${i})">
-        ${d.label}
-        </div>`;
-    });
-
-    datasetTabs.innerHTML = html;
-}
-
-function setDataset(i){
-    activeDataset = i;
-    renderDatasetTabs();
-    render();
-}
-
-/* ✅ CLUSTER */
-function setCluster(c){
-    activeCluster = c;
-    document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
-    document.getElementById("c-"+c).classList.add("active");
-    render();
-}
-
-/* ✅ DATE PARSER */
-function parseDate(v){
-    let d = new Date(v);
-    return isNaN(d) ? null : d;
-}
-
-/* ✅ RENDER */
-function render(){
-
-    if(!datasets.length) return;
-
-    let raw = datasets[activeDataset].data;
-
-    let grouped={};
-
-    raw.forEach(d=>{
-
-        let tracker = d["Tracker"] || "";
-        if(["Logo","Facebook","LinkedIn","Youtube"].includes(tracker)) return;
-
-        let banner = d["Template"] || "Unknown";
-        let email = d["Receiver"] || "Unknown";
-        let sender = d["Sender"] || "";
-
-        let date = parseDate(d["Time Clicked"]);
-        if(!date) return;
-
-        let key = email + "|" + banner;
-
-        if(!grouped[key]){
-            grouped[key] = {
-                email,
-                sender,
-                banner,
-                first: date,
-                days: new Set([date.toDateString()])
-            };
-        } else {
-            if(date < grouped[key].first) grouped[key].first = date;
-            grouped[key].days.add(date.toDateString());
-        }
-    });
-
-    let final = Object.values(grouped);
-
-    let clusters = {CP:[], BE:[], IT:[], OT:[]};
-
-    final.forEach(d=>{
-        let t = d.banner.toLowerCase();
-
-        if(t.includes("copilot")||t.includes("partner")) clusters.CP.push(d);
-        else if(t.includes("business")) clusters.BE.push(d);
-        else if(t.includes("erp")) clusters.IT.push(d);
-        else clusters.OT.push(d);
-    });
-
-    renderCluster(clusters[activeCluster]);
-}
-
-/* ✅ DISPLAY */
-function renderCluster(data){
-
-    let banners = {};
-
-    data.forEach(d=>{
-        if(!banners[d.banner]) banners[d.banner] = [];
-        banners[d.banner].push(d);
-    });
-
-    let html = "";
-
-    Object.keys(banners).forEach(banner=>{
-
-        html += `
-        <div class="banner-header" onclick="toggle(this)">
-        ${banner}
-        </div>
-
-        <div class="banner-content">
-        <table>
-        <tr>
-            <th>Email</th>
-            <th>Sender</th>
-            <th>Date Clicked</th>
-            <th>Days</th>
-        </tr>`;
-
-        banners[banner].forEach(r=>{
-            html += `
-            <tr>
-                <td>${r.email}</td>
-                <td>${r.sender}</td>
-                <td>${r.first.toLocaleString()}</td>
-                <td>${r.days.size}</td>
-            </tr>`;
-        });
-
-        html += "</table></div>";
-    });
-
-    output.innerHTML = html;
-}
-
-/* ✅ TOGGLE */
-function toggle(el){
-    let c = el.nextElementSibling;
-    c.style.display = (c.style.display==="block")?"none":"block";
-}
-
-</script>
-
-</body>
-</html>
+});
