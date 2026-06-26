@@ -7,120 +7,126 @@
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <style>
+
 body {
     font-family: Segoe UI;
-    background:#0a2a5e;
+    background:#0f2f63;
     color:white;
-    padding:20px;
+    margin:0;
+    padding:0;
+}
+
+/* MAIN CONTAINER */
+.container {
+    padding:30px 40px;
 }
 
 /* HEADER */
-.header {
-    text-align:left;
-    font-size:24px;
+h1 {
+    font-weight:500;
     margin-bottom:20px;
 }
 
-/* CONTROLS */
-.filters {
-    margin-bottom:20px;
+/* BUTTON BAR */
+.controls {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:30px;
 }
-button,input {
-    padding:8px;
+
+button,
+input {
+    padding:10px 12px;
     border-radius:6px;
     border:none;
+    font-size:14px;
 }
+
 button {
-    background:#0078d4;
+    background:#1e88e5;
     color:white;
     cursor:pointer;
 }
 
-/* DATASET TABS */
-.dataset-tabs {
-    margin-bottom:15px;
-}
-.dataset-tab {
-    display:inline-block;
-    padding:6px 12px;
-    background:#1f4ea3;
-    margin-right:5px;
-    border-radius:6px;
-    cursor:pointer;
-}
-.dataset-tab.active {
-    background:white;
-    color:#002f6c;
+/* CLUSTER BUTTONS */
+.cluster-tabs {
+    margin-bottom:30px;
 }
 
-/* CLUSTERS */
-.cluster-tabs {
-    margin-bottom:20px;
-}
 .cluster-tab {
     display:inline-block;
-    padding:6px 12px;
-    background:#1f4ea3;
-    margin-right:5px;
-    border-radius:6px;
+    padding:10px 18px;
+    margin-right:10px;
+    background:#2c4fa3;
+    border-radius:10px;
     cursor:pointer;
 }
+
 .cluster-tab.active {
     background:white;
     color:#002f6c;
 }
 
-/* GROUP BOX */
+/* CARD CONTAINER */
+.card {
+    background:#173a78;
+    border-radius:14px;
+    padding:20px;
+}
+
+/* GROUP BLOCK */
 .group {
-    background:#08224a;
-    margin-bottom:20px;
+    background:#1a4488;
     border-radius:10px;
-    padding:10px;
+    margin-bottom:15px;
 }
 
 /* GROUP HEADER */
 .group-header {
-    font-size:18px;
-    padding:10px;
-    background:#0f3b80;
-    border-radius:8px;
+    padding:14px;
+    font-size:16px;
+    border-bottom:1px solid rgba(255,255,255,0.1);
     cursor:pointer;
 }
 
-/* TABLE */
+/* TABLE AREA */
 .group-content {
     display:none;
-    margin-top:10px;
+    padding:15px;
 }
 
+/* TABLE */
 table {
     width:100%;
+    border-collapse:collapse;
 }
 
 th {
     text-align:left;
-    background:#003366;
     padding:10px;
+    background:#123265;
 }
 
 td {
     padding:8px;
-    border-bottom:1px solid #1f4ea3;
+    border-bottom:1px solid rgba(255,255,255,0.1);
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="header">4Sight Click Intelligence</div>
+<div class="container">
 
-<div class="filters">
+<h1>4Sight Click Intelligence</h1>
+
+<div class="controls">
 <input type="file" id="fileInput">
 <button onclick="upload()">Upload</button>
 <button onclick="clearAll()">Clear</button>
 </div>
-
-<div id="datasetTabs" class="dataset-tabs"></div>
 
 <div class="cluster-tabs">
 <span class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</span>
@@ -129,23 +135,16 @@ td {
 <span class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</span>
 </div>
 
+<div class="card">
 <div id="output"></div>
+</div>
+
+</div>
 
 <script>
 
-let datasets=[];
-let activeDataset=0;
-let activeCluster="CP";
-
-/* LOAD */
-window.onload = () => {
-    let s = localStorage.getItem("clickDatasets");
-    if(s){
-        datasets = JSON.parse(s);
-        renderDatasetTabs();
-        render();
-    }
-};
+let data = [];
+let activeCluster = "CP";
 
 /* UPLOAD */
 function upload(){
@@ -158,14 +157,13 @@ function upload(){
     reader.onload = function(e){
 
         let wb = XLSX.read(e.target.result,{type:'array'});
-        let sheet = wb.Sheets[wb.SheetNames[0]];
 
-        let json = XLSX.utils.sheet_to_json(sheet,{
+        let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{
             defval:"",
             raw:false
         });
 
-        let data = json.map(r=>{
+        data = json.map(r=>{
             let clean={};
             Object.keys(r).forEach(k=>{
                 clean[k.trim()] = r[k];
@@ -173,11 +171,6 @@ function upload(){
             return clean;
         });
 
-        datasets.unshift({label:file.name,data});
-        localStorage.setItem("clickDatasets",JSON.stringify(datasets));
-
-        activeDataset=0;
-        renderDatasetTabs();
         render();
     };
 
@@ -186,30 +179,19 @@ function upload(){
 
 /* CLEAR */
 function clearAll(){
-    localStorage.removeItem("clickDatasets");
-    location.reload();
+    data=[];
+    output.innerHTML="";
 }
 
-/* DATASET TABS */
-function renderDatasetTabs(){
-    let html="";
-    datasets.forEach((d,i)=>{
-        html += `<span class="dataset-tab ${i===activeDataset?'active':''}" onclick="setDataset(${i})">${d.label}</span>`;
-    });
-    datasetTabs.innerHTML=html;
-}
-
-function setDataset(i){
-    activeDataset=i;
-    renderDatasetTabs();
-    render();
-}
-
-/* CLUSTER */
+/* CLUSTER SWITCH */
 function setCluster(c){
     activeCluster=c;
-    document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
+
+    document.querySelectorAll(".cluster-tab")
+    .forEach(t=>t.classList.remove("active"));
+
     document.getElementById("c-"+c).classList.add("active");
+
     render();
 }
 
@@ -219,16 +201,14 @@ function parseDate(v){
     return isNaN(d)?null:d;
 }
 
-/* MAIN */
+/* RENDER */
 function render(){
 
-    if(!datasets.length) return;
-
-    let raw=datasets[activeDataset].data;
+    if(!data.length) return;
 
     let grouped={};
 
-    raw.forEach(d=>{
+    data.forEach(d=>{
 
         let banner=d.Template||"Unknown";
         let email=d.Receiver||"Unknown";
@@ -249,10 +229,10 @@ function render(){
             if(date<grouped[key].first) grouped[key].first=date;
             grouped[key].days.add(date.toDateString());
         }
+
     });
 
     let final=Object.values(grouped);
-
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
     final.forEach(d=>{
@@ -261,7 +241,7 @@ function render(){
         if(t.includes("copilot")||t.includes("reseller")||t.includes("event_")||t.includes("expo")){
             clusters.CP.push(d);
         }
-        else if(t.includes("business")||t.includes("dev")||t.includes("data")||t.includes("citizen")||t.includes("marketplace")){
+        else if(t.includes("business")||t.includes("dev")||t.includes("data")){
             clusters.BE.push(d);
         }
         else if(t.includes("erp")||t.includes("acumatica")||t.includes("dynamics")){
@@ -275,7 +255,7 @@ function render(){
     renderCluster(clusters[activeCluster]);
 }
 
-/* VIEW */
+/* GROUP VIEW */
 function renderCluster(data){
 
     let banners={};
@@ -323,7 +303,7 @@ function renderCluster(data){
 /* TOGGLE */
 function toggle(el){
     let c=el.nextElementSibling;
-    c.style.display = c.style.display==="block" ? "none":"block";
+    c.style.display = c.style.display==="block"?"none":"block";
 }
 
 </script>
