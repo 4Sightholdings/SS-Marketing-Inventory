@@ -2,107 +2,104 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>4Sight Click Intelligence</title>
+<title>4Sight Click Intelligence Report</title>
 
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
 <style>
+
 body {
     font-family: Segoe UI;
-    background:#102f66;
-    color:white;
+    background:#ffffff;
+    color:#333;
     margin:0;
+    padding:40px;
 }
 
-.container {
-    padding:30px;
-}
-
+/* HEADER */
 h1 {
-    margin-bottom:20px;
-    font-weight:500;
+    color:#003366;
+    font-weight:600;
+    margin-bottom:10px;
 }
 
-/* CONTROLS */
+.sub {
+    color:#666;
+    margin-bottom:30px;
+}
+
+/* Controls */
 .controls {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:20px;
+    margin-bottom:25px;
 }
 
 button {
     padding:8px 14px;
     border:none;
     border-radius:6px;
-    background:#1e88e5;
+    background:#0078d4;
     color:white;
     cursor:pointer;
 }
 
-/* CLUSTERS */
+/* Clusters */
 .cluster-tabs {
-    margin-bottom:20px;
+    margin-bottom:25px;
 }
 
 .cluster-tab {
-    padding:8px 14px;
+    display:inline-block;
+    padding:8px 16px;
     margin-right:8px;
-    background:#2c4fa3;
-    border-radius:8px;
+    background:#e6eef8;
+    border-radius:6px;
     cursor:pointer;
 }
 
 .cluster-tab.active {
-    background:white;
-    color:#002f6c;
+    background:#003366;
+    color:white;
 }
 
-/* CARD */
-.card {
-    background:#163a78;
-    padding:20px;
-    border-radius:12px;
+/* SECTION */
+.section {
+    margin-bottom:30px;
 }
 
-/* GROUPS */
-.group {
-    background:#1b4a96;
-    border-radius:8px;
-    margin-bottom:12px;
+/* Banner block */
+.banner-title {
+    font-size:16px;
+    font-weight:600;
+    color:#003366;
+    margin-bottom:8px;
 }
 
-.group-header {
-    padding:12px;
-    cursor:pointer;
-}
-
-.group-content {
-    display:none;
-    padding:10px;
-}
-
+/* Table */
 table {
     width:100%;
+    border-collapse:collapse;
+    margin-bottom:20px;
 }
 
 th {
-    background:#123265;
+    background:#003366;
+    color:white;
+    text-align:left;
     padding:8px;
 }
 
 td {
-    padding:6px;
-    border-bottom:1px solid rgba(255,255,255,0.1);
+    padding:8px;
+    border-bottom:1px solid #ddd;
 }
+
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
 <h1>4Sight Click Intelligence</h1>
+<div class="sub">Campaign Engagement Report</div>
 
 <div class="controls">
 <input type="file" id="fileInput">
@@ -117,18 +114,14 @@ td {
 <span class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</span>
 </div>
 
-<div class="card">
 <div id="output"></div>
-</div>
-
-</div>
 
 <script>
 
 let data = [];
 let activeCluster = "CP";
 
-/* UPLOAD */
+/* Upload */
 function upload(){
 
     let file = fileInput.files[0];
@@ -140,13 +133,13 @@ function upload(){
 
         let wb = XLSX.read(e.target.result,{type:'array'});
 
-        let json = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{
-            defval:"",
-            raw:false
-        });
+        let json = XLSX.utils.sheet_to_json(
+            wb.Sheets[wb.SheetNames[0]],
+            {defval:"", raw:false}
+        );
 
         data = json.map(r=>{
-            let clean={};
+            let clean = {};
             Object.keys(r).forEach(k=>{
                 clean[k.trim()] = r[k];
             });
@@ -159,13 +152,13 @@ function upload(){
     reader.readAsArrayBuffer(file);
 }
 
-/* CLEAR */
+/* Clear */
 function clearAll(){
     data=[];
     output.innerHTML="";
 }
 
-/* CLUSTER SWITCH */
+/* Cluster toggle */
 function setCluster(c){
     activeCluster=c;
 
@@ -177,13 +170,13 @@ function setCluster(c){
     render();
 }
 
-/* DATE */
+/* Date */
 function parseDate(v){
     let d=new Date(v);
     return isNaN(d)?null:d;
 }
 
-/* RENDER */
+/* Render */
 function render(){
 
     if(!data.length) return;
@@ -194,14 +187,14 @@ function render(){
 
         if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
 
-        let banner=d.Template||"Unknown";
-        let email=d.Receiver||"Unknown";
-        let sender=d.Sender||"";
+        let banner = d.Template || "Unknown";
+        let email  = d.Receiver || "Unknown";
+        let sender = d.Sender || "";
 
-        let date=parseDate(d["Time Clicked"]);
+        let date = parseDate(d["Time Clicked"]);
         if(!date) return;
 
-        let key=email+"|"+banner;
+        let key = email + "|" + banner;
 
         if(!grouped[key]){
             grouped[key]={
@@ -210,32 +203,20 @@ function render(){
                 days:new Set([date.toDateString()])
             };
         } else {
-            if(date<grouped[key].first) grouped[key].first=date;
+            if(date < grouped[key].first) grouped[key].first=date;
             grouped[key].days.add(date.toDateString());
         }
 
     });
 
-    let final=Object.values(grouped);
+    let final = Object.values(grouped);
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
-    /* ✅ HARD MATCH CLUSTERING */
+    /* FINAL MATCH LOGIC */
     final.forEach(d=>{
 
         const t = d.banner.toLowerCase();
 
-        /* EXCLUDE */
-        if(
-            t.includes("nps") ||
-            t.includes("brochure") ||
-            t.includes("download") ||
-            t.includes("holiday") ||
-            t.includes("support")
-        ){
-            return;
-        }
-
-        /* CP */
         if(
             t.includes("copilot") ||
             t.includes("reseller") ||
@@ -250,48 +231,23 @@ function render(){
         ){
             clusters.CP.push(d);
         }
-
-        /* BE */
         else if(
             t.includes("be_") ||
             t.includes("business") ||
             t.includes("dev") ||
-            t.includes("data") ||
-            t.includes("esg") ||
-            t.includes("acm") ||
-            t.includes("mde") ||
-            t.includes("citizen") ||
-            t.includes("4adopt")
+            t.includes("data")
         ){
             clusters.BE.push(d);
         }
-
-        /* IT */
         else if(
             t.includes("erp") ||
             t.includes("acumatica") ||
-            t.includes("dynamics") ||
-            t.includes("f&o") ||
-            t.includes("sei") ||
-            t.includes("fixed asset")
+            t.includes("dynamics")
         ){
             clusters.IT.push(d);
         }
-
-        /* OT */
-        else if(
-            t.includes("simio") ||
-            t.includes("automation") ||
-            t.includes("optimisation") ||
-            t.includes("simulation") ||
-            t.includes("opx")
-        ){
-            clusters.OT.push(d);
-        }
-
-        /* FALLBACK */
         else{
-            clusters.BE.push(d);
+            clusters.OT.push(d);
         }
 
     });
@@ -299,7 +255,7 @@ function render(){
     renderCluster(clusters[activeCluster]);
 }
 
-/* DISPLAY */
+/* Display */
 function renderCluster(data){
 
     let banners={};
@@ -314,40 +270,31 @@ function renderCluster(data){
     Object.keys(banners).forEach(name=>{
 
         html+=`
-        <div class="group">
-            <div class="group-header" onclick="toggle(this)">
-                ${name}
-            </div>
+        <div class="section">
+            <div class="banner-title">${name}</div>
 
-            <div class="group-content">
-                <table>
-                    <tr>
-                        <th>Email</th>
-                        <th>Sender</th>
-                        <th>First Click</th>
-                        <th>Days</th>
-                    </tr>`;
+            <table>
+            <tr>
+                <th>Email</th>
+                <th>Sender</th>
+                <th>First Click</th>
+                <th>Days Engaged</th>
+            </tr>`;
 
         banners[name].forEach(r=>{
             html+=`
-                <tr>
-                    <td>${r.email}</td>
-                    <td>${r.sender}</td>
-                    <td>${r.first.toLocaleString()}</td>
-                    <td>${r.days.size}</td>
-                </tr>`;
+            <tr>
+                <td>${r.email}</td>
+                <td>${r.sender}</td>
+                <td>${r.first.toLocaleString()}</td>
+                <td>${r.days.size}</td>
+            </tr>`;
         });
 
-        html+=`</table></div></div>`;
+        html+=`</table></div>`;
     });
 
     output.innerHTML=html;
-}
-
-/* TOGGLE */
-function toggle(el){
-    let c=el.nextElementSibling;
-    c.style.display = c.style.display==="block"?"none":"block";
 }
 
 </script>
