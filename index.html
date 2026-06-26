@@ -9,23 +9,25 @@
 <style>
 body {
     font-family: Segoe UI;
-    background: radial-gradient(circle at top,#0a2a5e,#001833 80%);
+    background:#0a2a5e;
     color:white;
     padding:20px;
 }
 
-.header { text-align:center; margin-bottom:20px; }
-
-.filters {
-    display:flex;
-    justify-content:center;
-    gap:10px;
+/* HEADER */
+.header {
+    text-align:left;
+    font-size:24px;
     margin-bottom:20px;
 }
 
+/* CONTROLS */
+.filters {
+    margin-bottom:20px;
+}
 button,input {
-    padding:10px;
-    border-radius:8px;
+    padding:8px;
+    border-radius:6px;
     border:none;
 }
 button {
@@ -34,17 +36,15 @@ button {
     cursor:pointer;
 }
 
+/* DATASET TABS */
 .dataset-tabs {
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-    justify-content:center;
-    margin-bottom:20px;
+    margin-bottom:15px;
 }
-
 .dataset-tab {
+    display:inline-block;
     padding:6px 12px;
-    background:rgba(255,255,255,0.2);
+    background:#1f4ea3;
+    margin-right:5px;
     border-radius:6px;
     cursor:pointer;
 }
@@ -55,15 +55,13 @@ button {
 
 /* CLUSTERS */
 .cluster-tabs {
-    display:flex;
-    justify-content:center;
-    gap:10px;
-    margin-bottom:15px;
+    margin-bottom:20px;
 }
-
 .cluster-tab {
-    padding:8px 16px;
-    background:rgba(255,255,255,0.2);
+    display:inline-block;
+    padding:6px 12px;
+    background:#1f4ea3;
+    margin-right:5px;
     border-radius:6px;
     cursor:pointer;
 }
@@ -72,57 +70,72 @@ button {
     color:#002f6c;
 }
 
-/* DATA VIEW */
-.banner-header {
-    padding:12px;
-    margin-top:10px;
-    background:rgba(255,255,255,0.15);
-    border-radius:6px;
+/* GROUP BOX */
+.group {
+    background:#08224a;
+    margin-bottom:20px;
+    border-radius:10px;
+    padding:10px;
+}
+
+/* GROUP HEADER */
+.group-header {
+    font-size:18px;
+    padding:10px;
+    background:#0f3b80;
+    border-radius:8px;
     cursor:pointer;
 }
 
-.banner-content { display:none; }
+/* TABLE */
+.group-content {
+    display:none;
+    margin-top:10px;
+}
 
 table {
     width:100%;
-    border-collapse:collapse;
 }
-th,td {
+
+th {
+    text-align:left;
+    background:#003366;
     padding:10px;
 }
-th { background:#002f6c; }
-td { border-bottom:1px solid rgba(255,255,255,0.1); }
+
+td {
+    padding:8px;
+    border-bottom:1px solid #1f4ea3;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">
-<h1>4Sight Click Intelligence</h1>
-</div>
+<div class="header">4Sight Click Intelligence</div>
 
 <div class="filters">
 <input type="file" id="fileInput">
 <button onclick="upload()">Upload</button>
-<button onclick="clearAll()">Clear All</button>
+<button onclick="clearAll()">Clear</button>
 </div>
 
 <div id="datasetTabs" class="dataset-tabs"></div>
 
 <div class="cluster-tabs">
-<div class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</div>
-<div class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</div>
-<div class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</div>
-<div class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</div>
+<span class="cluster-tab active" onclick="setCluster('CP')" id="c-CP">CP</span>
+<span class="cluster-tab" onclick="setCluster('BE')" id="c-BE">BE</span>
+<span class="cluster-tab" onclick="setCluster('IT')" id="c-IT">IT</span>
+<span class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</span>
 </div>
 
 <div id="output"></div>
 
 <script>
 
-let datasets = [];
-let activeDataset = 0;
-let activeCluster = "CP";
+let datasets=[];
+let activeDataset=0;
+let activeCluster="CP";
 
 /* LOAD */
 window.onload = () => {
@@ -138,10 +151,7 @@ window.onload = () => {
 function upload(){
 
     let file = fileInput.files[0];
-    if(!file){
-        alert("Select file");
-        return;
-    }
+    if(!file) return;
 
     let reader = new FileReader();
 
@@ -156,19 +166,17 @@ function upload(){
         });
 
         let data = json.map(r=>{
-            let clean = {};
+            let clean={};
             Object.keys(r).forEach(k=>{
                 clean[k.trim()] = r[k];
             });
             return clean;
         });
 
-        let label = file.name;
-
-        datasets.unshift({label,data});
+        datasets.unshift({label:file.name,data});
         localStorage.setItem("clickDatasets",JSON.stringify(datasets));
 
-        activeDataset = 0;
+        activeDataset=0;
         renderDatasetTabs();
         render();
     };
@@ -184,27 +192,22 @@ function clearAll(){
 
 /* DATASET TABS */
 function renderDatasetTabs(){
-
     let html="";
-
     datasets.forEach((d,i)=>{
-        html += `
-        <div class="dataset-tab ${i===activeDataset?'active':''}"
-        onclick="setDataset(${i})">${d.label}</div>`;
+        html += `<span class="dataset-tab ${i===activeDataset?'active':''}" onclick="setDataset(${i})">${d.label}</span>`;
     });
-
-    datasetTabs.innerHTML = html;
+    datasetTabs.innerHTML=html;
 }
 
 function setDataset(i){
-    activeDataset = i;
+    activeDataset=i;
     renderDatasetTabs();
     render();
 }
 
-/* CLUSTER SWITCH */
+/* CLUSTER */
 function setCluster(c){
-    activeCluster = c;
+    activeCluster=c;
     document.querySelectorAll(".cluster-tab").forEach(t=>t.classList.remove("active"));
     document.getElementById("c-"+c).classList.add("active");
     render();
@@ -212,23 +215,20 @@ function setCluster(c){
 
 /* DATE */
 function parseDate(v){
-    let d = new Date(v);
+    let d=new Date(v);
     return isNaN(d)?null:d;
 }
 
-/* MAIN RENDER */
+/* MAIN */
 function render(){
 
     if(!datasets.length) return;
 
-    let raw = datasets[activeDataset].data;
+    let raw=datasets[activeDataset].data;
 
     let grouped={};
 
     raw.forEach(d=>{
-
-        let tracker = d["Tracker"] || "";
-        if(["Logo","Facebook","LinkedIn","Youtube"].includes(tracker)) return;
 
         let banner=d.Template||"Unknown";
         let email=d.Receiver||"Unknown";
@@ -241,14 +241,12 @@ function render(){
 
         if(!grouped[key]){
             grouped[key]={
-                email,
-                sender,
-                banner,
+                email,sender,banner,
                 first:date,
                 days:new Set([date.toDateString()])
             };
         } else {
-            if(date < grouped[key].first) grouped[key].first=date;
+            if(date<grouped[key].first) grouped[key].first=date;
             grouped[key].days.add(date.toDateString());
         }
     });
@@ -257,75 +255,21 @@ function render(){
 
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
-    /* ✅ FINAL CLEAN CLASSIFICATION */
     final.forEach(d=>{
+        let t=d.banner.toLowerCase();
 
-        const t = d.banner.toLowerCase();
-
-        /* EXCLUDE */
-        if(
-            t.includes("nps") ||
-            t.includes("brochure") ||
-            t.includes("download") ||
-            t.includes("holiday") ||
-            t.includes("support")
-        ){
-            return;
-        }
-
-        /* CP */
-        if(
-            t.includes("copilot") ||
-            t.includes("reseller") ||
-            t.includes("cloud champion") ||
-            t.includes("partner summit") ||
-            t.includes("event_") ||
-            t.includes("expo")
-        ){
+        if(t.includes("copilot")||t.includes("reseller")||t.includes("event_")||t.includes("expo")){
             clusters.CP.push(d);
         }
-
-        /* BE */
-        else if(
-            t.includes("business") ||
-            t.includes("data") ||
-            t.includes("dev") ||
-            t.includes("esg") ||
-            t.includes("acm") ||
-            t.includes("mde") ||
-            t.includes("citizen") ||
-            t.includes("marketplace")
-        ){
+        else if(t.includes("business")||t.includes("dev")||t.includes("data")||t.includes("citizen")||t.includes("marketplace")){
             clusters.BE.push(d);
         }
-
-        /* IT */
-        else if(
-            t.includes("erp") ||
-            t.includes("acumatica") ||
-            t.includes("dynamics") ||
-            t.includes("f&o") ||
-            t.includes("sei")
-        ){
+        else if(t.includes("erp")||t.includes("acumatica")||t.includes("dynamics")){
             clusters.IT.push(d);
         }
-
-        /* OT */
-        else if(
-            t.includes("simio") ||
-            t.includes("automation") ||
-            t.includes("optimisation") ||
-            t.includes("simulation") ||
-            t.includes("opx")
-        ){
+        else{
             clusters.OT.push(d);
         }
-
-        /* FALLBACK */
-        else {
-            clusters.BE.push(d);
-        }
-
     });
 
     renderCluster(clusters[activeCluster]);
@@ -343,33 +287,34 @@ function renderCluster(data){
 
     let html="";
 
-    Object.keys(banners).forEach(banner=>{
+    Object.keys(banners).forEach(name=>{
 
         html+=`
-        <div class="banner-header" onclick="toggle(this)">
-            ${banner}
-        </div>
+        <div class="group">
+            <div class="group-header" onclick="toggle(this)">
+                ${name}
+            </div>
 
-        <div class="banner-content">
-        <table>
-        <tr>
-            <th>Email</th>
-            <th>Sender</th>
-            <th>First Click</th>
-            <th>Days</th>
-        </tr>`;
+            <div class="group-content">
+                <table>
+                    <tr>
+                        <th>Email</th>
+                        <th>Sender</th>
+                        <th>First Click</th>
+                        <th>Days</th>
+                    </tr>`;
 
-        banners[banner].forEach(r=>{
+        banners[name].forEach(r=>{
             html+=`
-            <tr>
-                <td>${r.email}</td>
-                <td>${r.sender}</td>
-                <td>${r.first.toLocaleString()}</td>
-                <td>${r.days.size}</td>
-            </tr>`;
+                <tr>
+                    <td>${r.email}</td>
+                    <td>${r.sender}</td>
+                    <td>${r.first.toLocaleString()}</td>
+                    <td>${r.days.size}</td>
+                </tr>`;
         });
 
-        html+="</table></div>";
+        html+=`</table></div></div>`;
     });
 
     output.innerHTML=html;
@@ -378,7 +323,7 @@ function renderCluster(data){
 /* TOGGLE */
 function toggle(el){
     let c=el.nextElementSibling;
-    c.style.display=(c.style.display==="block")?"none":"block";
+    c.style.display = c.style.display==="block" ? "none":"block";
 }
 
 </script>
