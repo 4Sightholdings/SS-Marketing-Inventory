@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>4Sight Click Intelligence Report</title>
+<title>4Sight Click Intelligence</title>
 
 <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
 
@@ -10,87 +10,102 @@
 
 body {
     font-family: Segoe UI;
-    background:#ffffff;
-    color:#333;
+    background:#0f2f63;
+    color:white;
     margin:0;
-    padding:40px;
 }
 
-/* HEADER */
+.container {
+    padding:30px;
+}
+
 h1 {
-    color:#003366;
-    font-weight:600;
-    margin-bottom:10px;
-}
-
-.sub {
-    color:#666;
-    margin-bottom:30px;
+    margin-bottom:20px;
 }
 
 /* Controls */
 .controls {
-    margin-bottom:25px;
+    display:flex;
+    gap:10px;
+    margin-bottom:20px;
+}
+
+button,input {
+    padding:8px 12px;
+    border:none;
+    border-radius:6px;
 }
 
 button {
-    padding:8px 14px;
-    border:none;
-    border-radius:6px;
-    background:#0078d4;
+    background:#1e88e5;
     color:white;
     cursor:pointer;
 }
 
-/* Clusters */
+/* Cluster tabs */
 .cluster-tabs {
-    margin-bottom:25px;
+    margin-bottom:20px;
 }
 
 .cluster-tab {
-    display:inline-block;
     padding:8px 16px;
-    margin-right:8px;
-    background:#e6eef8;
-    border-radius:6px;
+    background:#2c4fa3;
+    margin-right:6px;
+    border-radius:8px;
     cursor:pointer;
 }
 
 .cluster-tab.active {
-    background:#003366;
-    color:white;
+    background:white;
+    color:#002f6c;
 }
 
-/* SECTION */
-.section {
-    margin-bottom:30px;
+/* Card */
+.card {
+    background:#163a78;
+    padding:20px;
+    border-radius:12px;
 }
 
-/* Banner block */
-.banner-title {
-    font-size:16px;
+/* Groups */
+.group {
+    background:#1b4a96;
+    border-radius:8px;
+    margin-bottom:12px;
+}
+
+.group-header {
+    padding:12px;
     font-weight:600;
-    color:#003366;
-    margin-bottom:8px;
+    cursor:pointer;
 }
 
-/* Table */
+.group-content {
+    display:none;
+    padding:10px;
+}
+
+/* Tables */
 table {
     width:100%;
     border-collapse:collapse;
-    margin-bottom:20px;
+    margin-bottom:10px;
 }
 
 th {
-    background:#003366;
-    color:white;
-    text-align:left;
+    background:#123265;
     padding:8px;
 }
 
 td {
-    padding:8px;
-    border-bottom:1px solid #ddd;
+    padding:6px;
+    border-bottom:1px solid rgba(255,255,255,0.1);
+}
+
+/* Detail rows */
+.subtable {
+    margin-top:8px;
+    background:#0d2c5c;
 }
 
 </style>
@@ -98,8 +113,9 @@ td {
 
 <body>
 
+<div class="container">
+
 <h1>4Sight Click Intelligence</h1>
-<div class="sub">Campaign Engagement Report</div>
 
 <div class="controls">
 <input type="file" id="fileInput">
@@ -114,7 +130,11 @@ td {
 <span class="cluster-tab" onclick="setCluster('OT')" id="c-OT">OT</span>
 </div>
 
+<div class="card">
 <div id="output"></div>
+</div>
+
+</div>
 
 <script>
 
@@ -123,14 +143,12 @@ let activeCluster = "CP";
 
 /* Upload */
 function upload(){
-
     let file = fileInput.files[0];
     if(!file) return;
 
     let reader = new FileReader();
 
     reader.onload = function(e){
-
         let wb = XLSX.read(e.target.result,{type:'array'});
 
         let json = XLSX.utils.sheet_to_json(
@@ -152,13 +170,11 @@ function upload(){
     reader.readAsArrayBuffer(file);
 }
 
-/* Clear */
 function clearAll(){
     data=[];
     output.innerHTML="";
 }
 
-/* Cluster toggle */
 function setCluster(c){
     activeCluster=c;
 
@@ -170,13 +186,11 @@ function setCluster(c){
     render();
 }
 
-/* Date */
 function parseDate(v){
     let d=new Date(v);
     return isNaN(d)?null:d;
 }
 
-/* Render */
 function render(){
 
     if(!data.length) return;
@@ -187,32 +201,36 @@ function render(){
 
         if(["Logo","Facebook","LinkedIn","Youtube"].includes(d.Tracker)) return;
 
-        let banner = d.Template || "Unknown";
-        let email  = d.Receiver || "Unknown";
-        let sender = d.Sender || "";
+        let banner=d.Template || "Unknown";
+        let email=d.Receiver || "Unknown";
 
-        let date = parseDate(d["Time Clicked"]);
+        let date=parseDate(d["Time Clicked"]);
         if(!date) return;
 
-        let key = email + "|" + banner;
+        let key=email+"|"+banner;
 
         if(!grouped[key]){
             grouped[key]={
-                email,sender,banner,
+                email,
+                sender:d.Sender,
+                banner,
                 first:date,
-                days:new Set([date.toDateString()])
+                days:new Set([date.toDateString()]),
+                clicks:[d]
             };
         } else {
-            if(date < grouped[key].first) grouped[key].first=date;
+            grouped[key].clicks.push(d);
             grouped[key].days.add(date.toDateString());
+            if(date < grouped[key].first) grouped[key].first=date;
         }
 
     });
 
-    let final = Object.values(grouped);
+    let final=Object.values(grouped);
+
     let clusters={CP:[],BE:[],IT:[],OT:[]};
 
-    /* FINAL MATCH LOGIC */
+    /* ✅ FINAL CLUSTER LOGIC */
     final.forEach(d=>{
 
         const t = d.banner.toLowerCase();
@@ -220,22 +238,19 @@ function render(){
         if(
             t.includes("copilot") ||
             t.includes("reseller") ||
-            t.includes("cloud champion") ||
-            t.includes("partner summit") ||
-            t.includes("blitz") ||
-            t.includes("maas") ||
-            t.includes("marketplace") ||
             t.includes("summit") ||
             t.includes("expo") ||
-            t.includes("event_")
+            t.includes("event_") ||
+            t.includes("maas") ||
+            t.includes("marketplace")
         ){
             clusters.CP.push(d);
         }
         else if(
             t.includes("be_") ||
             t.includes("business") ||
-            t.includes("dev") ||
-            t.includes("data")
+            t.includes("data") ||
+            t.includes("dev")
         ){
             clusters.BE.push(d);
         }
@@ -255,7 +270,6 @@ function render(){
     renderCluster(clusters[activeCluster]);
 }
 
-/* Display */
 function renderCluster(data){
 
     let banners={};
@@ -270,18 +284,22 @@ function renderCluster(data){
     Object.keys(banners).forEach(name=>{
 
         html+=`
-        <div class="section">
-            <div class="banner-title">${name}</div>
+        <div class="group">
+            <div class="group-header" onclick="toggle(this)">
+                ${name}
+            </div>
 
+            <div class="group-content">
             <table>
-            <tr>
-                <th>Email</th>
-                <th>Sender</th>
-                <th>First Click</th>
-                <th>Days Engaged</th>
-            </tr>`;
+                <tr>
+                    <th>Email</th>
+                    <th>Sender</th>
+                    <th>First Click</th>
+                    <th>Days</th>
+                </tr>`;
 
         banners[name].forEach(r=>{
+
             html+=`
             <tr>
                 <td>${r.email}</td>
@@ -289,12 +307,37 @@ function renderCluster(data){
                 <td>${r.first.toLocaleString()}</td>
                 <td>${r.days.size}</td>
             </tr>`;
+
+            /* ✅ DETAILED CLICK DATA (REPORT STYLE) */
+            html+=`
+            <tr>
+                <td colspan="4">
+                    <table class="subtable">
+                        <tr>
+                            <th>Clicked Time</th>
+                            <th>Tracker</th>
+                        </tr>`;
+
+            r.clicks.forEach(c=>{
+                html+=`
+                <tr>
+                    <td>${c["Time Clicked"]}</td>
+                    <td>${c.Tracker}</td>
+                </tr>`;
+            });
+
+            html+=`</table></td></tr>`;
         });
 
-        html+=`</table></div>`;
+        html+=`</table></div></div>`;
     });
 
     output.innerHTML=html;
+}
+
+function toggle(el){
+    let c=el.nextElementSibling;
+    c.style.display = c.style.display==="block"?"none":"block";
 }
 
 </script>
