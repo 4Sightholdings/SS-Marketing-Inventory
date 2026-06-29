@@ -716,7 +716,7 @@ window.addEventListener('load', renderChart);
       result.event=text.substring(dashIdx+3).trim();
       text=text.substring(0,dashIdx)+' ';
     }
-    var clusters=[['ss','SS'],['be','BE'],['cp','CP'],['it','IT'],['ot','OT'],['africa','Africa'],['4sight','4Sight']];
+    var clusters=[['ss','SS'],['be','BE'],['cp','CP'],['it','IT'],['africa','Africa'],['4sight','4Sight']];
     for(var ci=0;ci<clusters.length;ci++){
       var ck=clusters[ci][0];
       var rx=new RegExp('(^|[^a-z0-9])'+ck+'($|[^a-z0-9])');
@@ -1111,24 +1111,25 @@ window.addEventListener('load', renderChart);
 (function(){
   // ╔══════════════════════════════════════════════════════════════╗
   // ║                                                              ║
-  // ║   👇👇👇  PASTE YOUR GEMINI API KEY ON THE NEXT LINE  👇👇👇   ║
+  // ║   👇👇👇  PASTE YOUR OPENROUTER API KEY ON NEXT LINE  👇👇👇   ║
   // ║                                                              ║
   // ╚══════════════════════════════════════════════════════════════╝
-  var GEMINI_API_KEY = 'AQ.Ab8RN6KFYCtHhHM6y2ix7dgBMnGIUCHHSOG2KtOl101Sfri7fg';
+  var OPENROUTER_API_KEY = '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';
   // ╔══════════════════════════════════════════════════════════════╗
   // ║   ☝️☝️☝️       END OF KEY — DO NOT REMOVE QUOTES       ☝️☝️☝️   ║
   // ╚══════════════════════════════════════════════════════════════╝
   //
-  // Get your key (free, no credit card):
-  //   1. Go to https://aistudio.google.com/apikey
-  //   2. Click "Create API key"
-  //   3. Copy the key (starts with AQ.Ab... or AIzaSy...)
+  // Get your key (free, no credit card needed):
+  //   1. Go to https://openrouter.ai (sign up — Google login works)
+  //   2. Click your profile → "Keys" → "Create Key"
+  //   3. Copy the key (starts with sk-or-v1-...)
   //   4. Paste it above between the quotes
   //   5. Save / commit this file
   //
-  // Both new (AQ.Ab...) and legacy (AIzaSy...) keys are supported.
+  // OpenRouter gives free access to Gemini 2.0 with no regional restrictions.
 
-  var GEMINI_MODEL = 'gemini-2.0-flash';
+  var OPENROUTER_MODEL = 'google/gemini-2.0-flash-exp:free';
+  var OPENROUTER_FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
       clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
@@ -1214,25 +1215,47 @@ window.addEventListener('load', renderChart);
   function buildContext(){var s=getAllStock(),l=getLowStock(),d=getDispatches(),t=getTotals(),tp=getTopDispatched(10);return{currentDate:new Date().toISOString().slice(0,10),user:"Christo Jansen Van Vuuren, Marketing Co-Ordinator at 4Sight Holdings",totals:t,stockLevels:s,lowStock:l,topDispatched:tp,recentDispatches:d.slice(-15)}}
 
   function callGemini(userQuery){
-    if(!GEMINI_API_KEY || GEMINI_API_KEY==='PASTE_YOUR_KEY_HERE'){
-      return Promise.reject(new Error('Gemini key not configured — please paste your key into the code'));
+    if(!OPENROUTER_API_KEY || OPENROUTER_API_KEY==='PASTE_YOUR_OPENROUTER_KEY_HERE'){
+      return Promise.reject(new Error('OpenRouter key not configured — please paste your sk-or-v1-... key into the code'));
     }
     var ctx=buildContext();
     var systemPrompt="You are an AI assistant embedded in Christo's 4Sight Marketing Inventory Dashboard at 4Sight Holdings (a South African technology group). Answer concisely using ONLY the live data provided below. Use HTML formatting (use <strong> for emphasis, <br> for line breaks, <ul><li> for lists, <table><tr><td> for data). Be friendly, professional, and direct. If data is missing, say so clearly. Current date: "+ctx.currentDate+".\n\nLIVE DASHBOARD DATA:\n"+JSON.stringify(ctx,null,2);
-    return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent',{
-      method:'POST',
-      headers:{
-        'Content-Type':'application/json',
-        'x-goog-api-key': GEMINI_API_KEY
-      },
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:systemPrompt+'\n\nUSER QUESTION: '+userQuery}]}],
-        generationConfig:{temperature:0.4,maxOutputTokens:800,topP:0.95}
-      })
-    }).then(function(r){return r.json()}).then(function(j){
-      if(j.error)throw new Error(j.error.message||'Gemini API error');
-      if(!j.candidates||!j.candidates[0])throw new Error('No response from Gemini');
-      return j.candidates[0].content.parts[0].text;
+    function attempt(model){
+      return fetch('https://openrouter.ai/api/v1/chat/completions',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+OPENROUTER_API_KEY,
+          'HTTP-Referer':'https://4sightholdings.github.io/SS-Marketing-Inventory/',
+          'X-Title':'4Sight Marketing Inventory Dashboard'
+        },
+        body:JSON.stringify({
+          model:model,
+          messages:[
+            {role:'system',content:systemPrompt},
+            {role:'user',content:userQuery}
+          ],
+          temperature:0.4,
+          max_tokens:800,
+          top_p:0.95
+        })
+      }).then(function(r){
+        if(!r.ok){
+          if(r.status===429)throw new Error('RATE_LIMIT');
+          if(r.status===401)throw new Error('AUTH_FAIL');
+          return r.json().then(function(j){throw new Error((j.error&&j.error.message)||('HTTP '+r.status))});
+        }
+        return r.json();
+      }).then(function(j){
+        if(j.error)throw new Error(j.error.message||'OpenRouter API error');
+        if(!j.choices||!j.choices[0]||!j.choices[0].message)throw new Error('No response from OpenRouter');
+        return j.choices[0].message.content;
+      });
+    }
+    return attempt(OPENROUTER_MODEL).catch(function(err){
+      console.warn('Primary model failed:',err.message,'— trying fallback…');
+      if(err.message==='AUTH_FAIL')throw err;
+      return attempt(OPENROUTER_FALLBACK_MODEL);
     });
   }
 
@@ -1248,7 +1271,7 @@ window.addEventListener('load', renderChart);
         if(answer){var formatted=answer.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');addBot(formatted)}
         else addBot("Hmm, I got no answer from Gemini. Try rephrasing?");
         sendBtn.disabled=false;
-      }).catch(function(err){stopTyping();addBot("⚠️ AI error: "+err.message);sendBtn.disabled=false});
+      }).catch(function(err){stopTyping();var friendly;if(err.message==='RATE_LIMIT')friendly='🤖 AI is busy right now — please try again in a moment.';else if(err.message==='AUTH_FAIL')friendly='🔑 API key issue — please check your OpenRouter key in the code.';else if(err.message.indexOf('configured')!==-1)friendly='⚠️ '+err.message;else friendly='⚠️ AI temporarily unavailable: '+err.message;addBot(friendly);sendBtn.disabled=false});
     },300);
   }
   sendBtn.addEventListener('click',send);
