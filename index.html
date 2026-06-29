@@ -1024,7 +1024,7 @@ window.addEventListener('load', renderChart);
 
 
 
-<!-- ========== 4Sight AI Assistant — Gemini Powered ========== -->
+<!-- ========== 4Sight AI Assistant — Embedded Gemini 2.0 ========== -->
 <style>
 #aiBotBtn{position:fixed;bottom:24px;left:24px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#0a1628 0%,#1a2744 35%,#2563eb 75%,#4fc3f7 100%);color:#fff;border:none;cursor:pointer;z-index:9999;transition:transform .25s,box-shadow .25s;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(10,22,40,.45),inset 0 1px 0 rgba(255,255,255,.18);font-family:'Inter',sans-serif;font-weight:700;overflow:hidden}
 #aiBotBtn::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.25) 0%,transparent 55%);pointer-events:none}
@@ -1046,10 +1046,7 @@ window.addEventListener('load', renderChart);
 #aiBotPanel .ai-header-btns{display:flex;gap:4px;position:relative;z-index:1}
 #aiBotPanel .ai-icon-btn{background:rgba(255,255,255,.15);border:none;color:#fff;font-size:.95rem;cursor:pointer;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .2s}
 #aiBotPanel .ai-icon-btn:hover{background:rgba(255,255,255,.28)}
-#aiBotPanel .ai-status{font-size:.7rem;padding:6px 18px;background:#fef3c7;color:#92400e;display:flex;align-items:center;gap:6px;border-bottom:1px solid rgba(0,0,0,.05)}
-#aiBotPanel .ai-status.connected{background:#dcfce7;color:#166534}
-#aiBotPanel .ai-status .dot{width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 6px currentColor}
-#aiBotMessages{flex:1;overflow-y:auto;padding:14px 18px;background:linear-gradient(180deg,#fafbff 0%,#eef4ff 100%);display:flex;flex-direction:column;gap:10px;min-height:200px}
+#aiBotMessages{flex:1;overflow-y:auto;padding:14px 18px;background:linear-gradient(180deg,#fafbff 0%,#eef4ff 100%);display:flex;flex-direction:column;gap:10px;min-height:240px}
 .ai-msg{padding:10px 14px;border-radius:14px;font-size:.86rem;line-height:1.55;max-width:90%;word-wrap:break-word;animation:msgIn .3s ease}
 @keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 .ai-msg.user{background:linear-gradient(135deg,#1a2744,#2563eb);color:#fff;align-self:flex-end;border-bottom-right-radius:4px;box-shadow:0 2px 8px rgba(37,99,235,.25)}
@@ -1075,25 +1072,6 @@ window.addEventListener('load', renderChart);
 .ai-suggestions{display:flex;flex-wrap:wrap;gap:6px;padding:8px 14px 12px;background:#fafbff;border-top:1px solid #e8eaed;max-height:90px;overflow-y:auto}
 .ai-chip{background:#fff;border:1px solid #d9dde3;color:#1a2744;padding:6px 10px;border-radius:14px;font-size:.73rem;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s;white-space:nowrap}
 .ai-chip:hover{background:linear-gradient(135deg,#2563eb,#4fc3f7);color:#fff;border-color:#2563eb}
-#aiSettingsModal{position:fixed;inset:0;background:rgba(10,22,40,.6);backdrop-filter:blur(4px);z-index:10002;display:none;align-items:center;justify-content:center;font-family:'Inter',sans-serif}
-#aiSettingsModal.open{display:flex}
-#aiSettingsModal .ai-modal-card{background:#fff;border-radius:18px;width:480px;max-width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3);overflow:hidden}
-#aiSettingsModal .ai-modal-head{background:linear-gradient(135deg,#0a1628 0%,#1a2744 40%,#2563eb 100%);color:#fff;padding:20px 24px}
-#aiSettingsModal .ai-modal-head h4{margin:0;font-size:1.1rem;font-weight:600}
-#aiSettingsModal .ai-modal-head p{margin:4px 0 0;font-size:.78rem;opacity:.9}
-#aiSettingsModal .ai-modal-body{padding:20px 24px}
-#aiSettingsModal label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:#666;margin:14px 0 6px;font-weight:600}
-#aiSettingsModal label:first-child{margin-top:0}
-#aiSettingsModal input,#aiSettingsModal select{width:100%;padding:10px 12px;border:1px solid #d9dde3;border-radius:10px;font-family:'Inter',sans-serif;font-size:.88rem;outline:none}
-#aiSettingsModal input:focus,#aiSettingsModal select:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-#aiSettingsModal .ai-hint{font-size:.72rem;color:#888;margin-top:8px;line-height:1.5}
-#aiSettingsModal .ai-hint a{color:#2563eb;text-decoration:none;font-weight:600}
-#aiSettingsModal .ai-free-badge{display:inline-block;background:#dcfce7;color:#166534;padding:3px 8px;border-radius:6px;font-size:.7rem;font-weight:700;margin-left:6px}
-#aiSettingsModal .ai-modal-actions{display:flex;gap:8px;justify-content:flex-end;padding:0 24px 20px}
-#aiSettingsModal .ai-btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-family:'Inter',sans-serif;font-size:.85rem}
-#aiSettingsModal .ai-btn-primary{background:linear-gradient(135deg,#1a2744,#2563eb);color:#fff}
-#aiSettingsModal .ai-btn-secondary{background:#eceff1;color:#37474f}
-#aiSettingsModal .ai-btn-danger{background:#fee2e2;color:#b91c1c}
 </style>
 
 <button id="aiBotBtn" title="4Sight AI Assistant">
@@ -1105,15 +1083,13 @@ window.addEventListener('load', renderChart);
   <div class="ai-header">
     <div style="flex:1">
       <h4><span class="ai-logo-mini">4</span> 4Sight AI Assistant</h4>
-      <span>Powered by Gemini · Free forever</span>
+      <span>Powered by Gemini 2.0 · Always free</span>
     </div>
     <div class="ai-header-btns">
-      <button class="ai-icon-btn" id="aiSettingsBtn" title="Settings">⚙️</button>
       <button class="ai-icon-btn" id="aiClearBtn" title="Clear chat">🗑️</button>
       <button class="ai-icon-btn" id="aiBotClose" title="Close">✕</button>
     </div>
   </div>
-  <div class="ai-status" id="aiStatus"><span class="dot"></span><span id="aiStatusText">Rule-based mode · Click ⚙️ to add free Gemini key</span></div>
   <div id="aiBotMessages"></div>
   <div class="ai-suggestions" id="aiSuggestions">
     <button class="ai-chip" data-q="What's low on stock?">⚠️ Low stock</button>
@@ -1131,76 +1107,29 @@ window.addEventListener('load', renderChart);
   </div>
 </div>
 
-<div id="aiSettingsModal">
-  <div class="ai-modal-card">
-    <div class="ai-modal-head">
-      <h4>🤖 AI Provider Settings</h4>
-      <p>Connect a free LLM for smart, free-form answers</p>
-    </div>
-    <div class="ai-modal-body">
-      <label>Provider</label>
-      <select id="aiProvider">
-        <option value="none">None (rule-based only)</option>
-        <option value="gemini" selected>🆓 Google Gemini Flash (Recommended)</option>
-        <option value="openai">OpenAI GPT-4o-mini (Paid)</option>
-        <option value="anthropic">Anthropic Claude Haiku (Paid)</option>
-      </select>
-      <label>API Key</label>
-      <input type="password" id="aiApiKey" placeholder="AIzaSy... (Gemini) or sk-... (OpenAI)" autocomplete="off">
-      <div class="ai-hint">
-        Free Gemini key: Visit https://aistudio.google.com/apikey to get an API key (no credit card needed)
-        Limit: <strong>1,500 requests/day · 1M tokens/min</strong>. 
-        Your key is stored only in this browser — never uploaded anywhere.
-      </div>
-    </div>
-    <div class="ai-modal-actions">
-      <button class="ai-btn ai-btn-danger" id="aiClearKey">Disconnect</button>
-      <button class="ai-btn ai-btn-secondary" id="aiCancelSettings">Cancel</button>
-      <button class="ai-btn ai-btn-primary" id="aiSaveSettings">Save</button>
-    </div>
-  </div>
-</div>
-
 <script>
 (function(){
+  // ====== EMBEDDED GEMINI API KEY ======
+  // ⚠️ Restrict this key in Google Cloud Console to your dashboard URL only.
+  // Model: gemini-2.0-flash (free tier: 1,500 requests/day)
+  var GEMINI_API_KEY = 'AQ.Ab8RN6LEfkjECV9pT2f7lJFJHIaIOpegR3wpnWzFC5nIrP_sTAE';
+  var GEMINI_MODEL = 'gemini-2.0-flash';
+  // =====================================
+
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
-      clearBtn=document.getElementById('aiClearBtn'),settingsBtn=document.getElementById('aiSettingsBtn'),
-      messages=document.getElementById('aiBotMessages'),input=document.getElementById('aiBotInput'),
-      sendBtn=document.getElementById('aiBotSend'),suggestions=document.getElementById('aiSuggestions'),
-      statusEl=document.getElementById('aiStatus'),statusText=document.getElementById('aiStatusText'),
-      modal=document.getElementById('aiSettingsModal'),providerSel=document.getElementById('aiProvider'),
-      apiKeyInput=document.getElementById('aiApiKey');
-  var AI_PROVIDER_KEY='ai_provider_marketing',AI_KEY_KEY='ai_api_key_marketing';
-  function getProvider(){return localStorage.getItem(AI_PROVIDER_KEY)||'none'}
-  function getApiKey(){return localStorage.getItem(AI_KEY_KEY)||''}
-  function refreshStatus(){
-    var p=getProvider(),k=getApiKey();
-    var labels={openai:'OpenAI GPT-4o-mini',anthropic:'Anthropic Claude Haiku',gemini:'🆓 Google Gemini Flash'};
-    if(p!=='none'&&k){statusEl.classList.add('connected');statusText.textContent='Connected · '+(labels[p]||p)}
-    else{statusEl.classList.remove('connected');statusText.textContent='Rule-based mode · Click ⚙️ to add free Gemini key'}
-  }
+      clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
+      input=document.getElementById('aiBotInput'),sendBtn=document.getElementById('aiBotSend'),
+      suggestions=document.getElementById('aiSuggestions');
+
   btn.addEventListener('click',function(){
     panel.classList.toggle('open');
     if(panel.classList.contains('open')&&messages.children.length===0){
-      addBot("👋 Hi <strong>Christo</strong>! I'm your 4Sight dashboard AI. Ask me about stock, dispatches, export data, draft restock orders — anything!<br><br>💡 <strong>Pro tip:</strong> Click ⚙️ and add a free Gemini key for unlimited smart answers.");
+      addBot("👋 Hi <strong>Christo</strong>! I'm your 4Sight AI Assistant. Ask me anything about stock, dispatches, exports, restock orders — or just chat! ✨");
     }
   });
   closeBtn.addEventListener('click',function(){panel.classList.remove('open')});
   clearBtn.addEventListener('click',function(){messages.innerHTML='';addBot("Chat cleared. What would you like to know?")});
-  settingsBtn.addEventListener('click',function(){providerSel.value=getProvider();apiKeyInput.value=getApiKey();modal.classList.add('open')});
-  document.getElementById('aiCancelSettings').addEventListener('click',function(){modal.classList.remove('open')});
-  document.getElementById('aiSaveSettings').addEventListener('click',function(){
-    localStorage.setItem(AI_PROVIDER_KEY,providerSel.value);
-    localStorage.setItem(AI_KEY_KEY,apiKeyInput.value.trim());
-    modal.classList.remove('open');refreshStatus();
-    var labels={gemini:'Google Gemini',openai:'OpenAI',anthropic:'Anthropic'};
-    addBot(providerSel.value==='none'?"✅ Switched to rule-based mode.":"✅ Connected to <strong>"+(labels[providerSel.value]||providerSel.value)+"</strong>. I can now answer free-form questions using live dashboard data!");
-  });
-  document.getElementById('aiClearKey').addEventListener('click',function(){
-    localStorage.removeItem(AI_PROVIDER_KEY);localStorage.removeItem(AI_KEY_KEY);
-    providerSel.value='none';apiKeyInput.value='';refreshStatus();
-    addBot("🔌 Disconnected. Now using rule-based mode.");modal.classList.remove('open');
-  });
+
   function addUser(text){var d=document.createElement('div');d.className='ai-msg user';d.textContent=text;messages.appendChild(d);messages.scrollTop=messages.scrollHeight}
   function addBot(html){
     var d=document.createElement('div');d.className='ai-msg bot';d.innerHTML=html;messages.appendChild(d);messages.scrollTop=messages.scrollHeight;
@@ -1263,40 +1192,31 @@ window.addEventListener('load', renderChart);
     if(!stockMatch)stockMatch=t.match(/^(.+?)\s+(?:stock|qty|left|remaining)\??$/);
     if(stockMatch){var s=getStock(stockMatch[1].trim());if(s)return"📦 <strong>"+s.item+"</strong>: <strong>"+s.qty+"</strong> in stock"+(s.section?" ("+s.section+")":"")+(s.supplier?" · "+s.supplier:"")+".";return null}
     if(/(summary|summarize|overview|recap|status|how are we|how's stock)/.test(t)){var tot2=getTotals(),low2=getLowStock(),top2=getTopDispatched(3);var h5="📋 <strong>Dashboard summary:</strong><br>• Events: <strong>"+tot2.events+"</strong> · Dispatched: <strong>"+tot2.dispatched+"</strong> items<br>• Low stock: <strong>"+low2.length+"</strong>";if(low2.length>0)h5+=" ("+low2.map(function(x){return x.item}).slice(0,3).join(', ')+(low2.length>3?', …':'')+")";h5+="<br>• Top 3: "+top2.map(function(x){return x.item+" ("+x.qty+")"}).join(', ');h5+="<div class='ai-actions'><button class='ai-action' data-action='copySummary'>📋 Copy</button><button class='ai-action' data-action='printDispatches'>🖨️ Print</button></div>";return h5}
-    if(/(help|what can you do|commands|options|capabilities)/.test(t))return"I can help with:<br>• <strong>Stock</strong> — 'How many pens?' · 'Low stock'<br>• <strong>Dispatches</strong> — 'Top 5 dispatched' · 'June activity' · 'CP dispatches'<br>• <strong>Export</strong> — 'Export June as CSV'<br>• <strong>Email</strong> — 'Email me the low-stock list'<br>• <strong>Restock</strong> — 'Draft a restock order'<br>• <strong>Navigation</strong> — 'Go to Fourways'<br>• <strong>Actions</strong> — 'Log a dispatch' · 'Print summary'<br><br>Connect free Gemini via ⚙️ for free-form smart answers! 🤖";
+    if(/(help|what can you do|commands|options|capabilities)/.test(t))return"I can help with:<br>• <strong>Stock</strong> — 'How many pens?' · 'Low stock'<br>• <strong>Dispatches</strong> — 'Top 5 dispatched' · 'June activity'<br>• <strong>Export</strong> — 'Export June as CSV'<br>• <strong>Email</strong> — 'Email me the low-stock list'<br>• <strong>Restock</strong> — 'Draft a restock order'<br>• <strong>Navigation</strong> — 'Go to Fourways'<br>• Or ask <strong>anything</strong> — Gemini handles it! 🤖";
     var allStock=getAllStock();for(var i=0;i<allStock.length;i++){if(t.indexOf(allStock[i].item.toLowerCase())!==-1)return"📦 <strong>"+allStock[i].item+"</strong>: <strong>"+allStock[i].qty+"</strong> in stock."}
     return null;
   }
 
   function buildContext(){var s=getAllStock(),l=getLowStock(),d=getDispatches(),t=getTotals(),tp=getTopDispatched(10);return{currentDate:new Date().toISOString().slice(0,10),user:"Christo Jansen Van Vuuren, Marketing Co-Ordinator at 4Sight Holdings",totals:t,stockLevels:s,lowStock:l,topDispatched:tp,recentDispatches:d.slice(-15)}}
 
-  function callLLM(userQuery){
-    var provider=getProvider(),key=getApiKey();
-    if(provider==='none'||!key)return Promise.resolve(null);
+  function callGemini(userQuery){
+    if(!GEMINI_API_KEY || GEMINI_API_KEY==='PASTE_YOUR_GEMINI_KEY_HERE'){
+      return Promise.reject(new Error('Gemini key not configured in code'));
+    }
     var ctx=buildContext();
     var systemPrompt="You are an AI assistant embedded in Christo's 4Sight Marketing Inventory Dashboard at 4Sight Holdings (a South African technology group). Answer concisely using ONLY the live data provided below. Use HTML formatting (use <strong> for emphasis, <br> for line breaks, <ul><li> for lists, <table><tr><td> for data). Be friendly, professional, and direct. If data is missing, say so clearly. Current date: "+ctx.currentDate+".\n\nLIVE DASHBOARD DATA:\n"+JSON.stringify(ctx,null,2);
-
-    if(provider==='gemini'){
-      return fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+encodeURIComponent(key),{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({
-          contents:[{role:'user',parts:[{text:systemPrompt+'\n\nUSER QUESTION: '+userQuery}]}],
-          generationConfig:{temperature:0.4,maxOutputTokens:800,topP:0.95}
-        })
-      }).then(function(r){return r.json()}).then(function(j){
-        if(j.error)throw new Error(j.error.message||'Gemini API error');
-        if(!j.candidates||!j.candidates[0])throw new Error('No response from Gemini');
-        return j.candidates[0].content.parts[0].text;
-      });
-    }
-    if(provider==='openai'){
-      return fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},body:JSON.stringify({model:'gpt-4o-mini',messages:[{role:'system',content:systemPrompt},{role:'user',content:userQuery}],temperature:0.4,max_tokens:800})}).then(function(r){return r.json()}).then(function(j){if(j.error)throw new Error(j.error.message);return j.choices[0].message.content});
-    }
-    if(provider==='anthropic'){
-      return fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-3-5-haiku-20241022',max_tokens:800,system:systemPrompt,messages:[{role:'user',content:userQuery}]})}).then(function(r){return r.json()}).then(function(j){if(j.error)throw new Error(j.error.message);return j.content[0].text});
-    }
-    return Promise.resolve(null);
+    return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+encodeURIComponent(GEMINI_API_KEY),{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        contents:[{role:'user',parts:[{text:systemPrompt+'\n\nUSER QUESTION: '+userQuery}]}],
+        generationConfig:{temperature:0.4,maxOutputTokens:800,topP:0.95}
+      })
+    }).then(function(r){return r.json()}).then(function(j){
+      if(j.error)throw new Error(j.error.message||'Gemini API error');
+      if(!j.candidates||!j.candidates[0])throw new Error('No response from Gemini');
+      return j.candidates[0].content.parts[0].text;
+    });
   }
 
   function send(){
@@ -1306,20 +1226,17 @@ window.addEventListener('load', renderChart);
       var ruleAnswer;
       try{ruleAnswer=respond(q)}catch(err){ruleAnswer="Error: "+err.message;console.error(err)}
       if(ruleAnswer){stopTyping();addBot(ruleAnswer);sendBtn.disabled=false;return}
-      var provider=getProvider(),key=getApiKey();
-      if(provider==='none'||!key){stopTyping();addBot("I don't have a built-in rule for that. <br><br>💡 Click <strong>⚙️</strong> and add a free Gemini key for unlimited smart answers!");sendBtn.disabled=false;return}
-      callLLM(q).then(function(answer){
+      callGemini(q).then(function(answer){
         stopTyping();
         if(answer){var formatted=answer.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');addBot(formatted)}
-        else addBot("LLM returned no answer.");
+        else addBot("Hmm, I got no answer from Gemini. Try rephrasing?");
         sendBtn.disabled=false;
-      }).catch(function(err){stopTyping();addBot("⚠️ AI error: "+err.message+"<br>Check your API key in ⚙️ settings.");sendBtn.disabled=false});
+      }).catch(function(err){stopTyping();addBot("⚠️ AI error: "+err.message);sendBtn.disabled=false});
     },300);
   }
   sendBtn.addEventListener('click',send);
   input.addEventListener('keydown',function(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send()}});
   suggestions.addEventListener('click',function(e){var chip=e.target.closest('.ai-chip');if(!chip)return;input.value=chip.getAttribute('data-q');send()});
-  refreshStatus();
 })();
 </script>
 <!-- ========== END 4Sight AI Assistant ========== -->
