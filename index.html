@@ -135,15 +135,15 @@ tbody tr:hover{background:#f8faff}
 </div>
 <div class="nav-wrap">
   <div class="nav-pills">
-    <button class="nav-pill" onclick="showTab('overview',this)">Overview</button>
-    <button class="nav-pill active" onclick="showTab('dispatch',this)">Dispatch Tracker</button>
+    <button class="nav-pill active" onclick="showTab('overview',this)">Overview</button>
+    <button class="nav-pill" onclick="showTab('dispatch',this)">Dispatch Tracker</button>
     <button class="nav-pill" onclick="showTab('centurion',this)">Stock Centurion</button>
     <button class="nav-pill" onclick="showTab('fourways',this)">Stock Fourways</button>
     <button class="nav-pill" onclick="showTab('branding',this)">Branding Items</button>
   </div>
 </div>
 <div class="content">
-<div id="overview" class="tab-content">
+<div id="overview" class="tab-content active">
   <div class="kpi-row">
     <div class="kpi-card border-navy"><div class="label">Branded Pens</div><div class="value" data-kpi="Branded Pens">526</div><div class="sub" data-kpi-sub="Branded Pens" data-base="668">Was 668, –142</div></div>
     <div class="kpi-card border-cyan"><div class="label">Water Bottles</div><div class="value" data-kpi="Water Bottles">87</div><div class="sub" data-kpi-sub="Water Bottles" data-base="108">Was 108, –21</div></div>
@@ -191,10 +191,10 @@ tbody tr:hover{background:#f8faff}
     </tbody></table>
   </div>
 </div>
-<div id="dispatch" class="tab-content active">
+<div id="dispatch" class="tab-content">
   <div class="kpi-row">
     <div class="kpi-card border-navy"><div class="label">Total Events</div><div class="value" id="kpiTotalEvents">35</div><div class="sub">&nbsp;</div></div>
-    <div class="kpi-card border-purple"><div class="label">Clusters</div><div class="value">5</div><div class="sub">SS, BE, CP, IT, Africa</div></div>
+    <div class="kpi-card border-purple"><div class="label">Clusters</div><div class="value">6</div><div class="sub">SS, BE, CP, IT, OT, Africa</div></div>
     <div class="kpi-card border-green"><div class="label">Total Dispatched</div><div class="value" id="kpiTotalDispatched">755</div><div class="sub">Jan–Jul 2026</div></div>
   </div>
   <div class="card"><h3>All Dispatch Events</h3>
@@ -406,6 +406,7 @@ window.addEventListener('load', renderChart);
       <option value="BE">BE</option>
       <option value="CP">CP</option>
       <option value="IT">IT</option>
+      <option value="OT">OT</option>
       <option value="Africa">Africa</option>
       <option value="4Sight">4Sight</option>
       <option value="—" selected="">—</option>
@@ -452,7 +453,7 @@ window.addEventListener('load', renderChart);
 (function(){
   var GH_OWNER='4Sightholdings', GH_REPO='SS-Marketing-Inventory', GH_PATH='index.html', GH_BRANCH='main';
   var GH_TOKEN_KEY='gh_token_marketing_inventory', GH_LAST_SYNC_KEY='gh_last_sync_marketing_inventory';
-  var clusterBadge={ 'SS':'badge badge-gray','BE':'badge badge-olive','CP':'badge badge-green','IT':'badge badge-purple','Africa':'badge badge-amber','4Sight':'badge badge-teal','\u2014':'badge badge-gray' };
+  var clusterBadge={ 'SS':'badge badge-gray','BE':'badge badge-olive','CP':'badge badge-green','IT':'badge badge-purple','OT':'badge badge-orange','Africa':'badge badge-amber','4Sight':'badge badge-teal','\u2014':'badge badge-gray' };
 
   var btn=document.getElementById('stockBotBtn'),
       panel=document.getElementById('stockBotPanel'),
@@ -715,7 +716,7 @@ window.addEventListener('load', renderChart);
       result.event=text.substring(dashIdx+3).trim();
       text=text.substring(0,dashIdx)+' ';
     }
-    var clusters=[['ss','SS'],['be','BE'],['cp','CP'],['it','IT'],['africa','Africa'],['4sight','4Sight']];
+    var clusters=[['ss','SS'],['be','BE'],['cp','CP'],['it','IT'],['ot','OT'],['africa','Africa'],['4sight','4Sight']];
     for(var ci=0;ci<clusters.length;ci++){
       var ck=clusters[ci][0];
       var rx=new RegExp('(^|[^a-z0-9])'+ck+'($|[^a-z0-9])');
@@ -1199,7 +1200,7 @@ window.addEventListener('load', renderChart);
     if(/(total|how many).*(event|dispatch)/.test(t)||/(grand total)/.test(t)){var tot=getTotals();return"📈 <strong>"+tot.events+"</strong> events · <strong>"+tot.dispatched+"</strong> items dispatched."}
     var monMatch=t.match(/(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)/);
     if(monMatch&&/(activity|dispatch|event|month|show|in|during)/.test(t)){var rows2=filterByMonth(monMatch[1]);if(rows2.length===0)return"No activity for "+monMatch[1]+".";var h3="<strong>📅 "+rows2.length+" event(s) in "+monMatch[1]+":</strong><table>";rows2.slice(0,15).forEach(function(d){h3+="<tr><td>"+d.date+" — "+d.event+"</td><td>"+d.cluster+"</td></tr>"});if(rows2.length>15)h3+="<tr><td colspan='2'><em>…+"+(rows2.length-15)+" more</em></td></tr>";h3+="</table>";return h3}
-    var cMatch=t.match(/\b(ss|be|cp|it|africa|4sight)\b/i);
+    var cMatch=t.match(/\b(ss|be|cp|it|ot|africa|4sight)\b/i);
     if(cMatch&&/(dispatch|event|show|activity)/.test(t)){var rows3=filterByCluster(cMatch[1]);if(rows3.length===0)return"No dispatches for that cluster.";var h4="<strong>"+rows3.length+" dispatch(es) for "+cMatch[1].toUpperCase()+":</strong><table>";rows3.slice(0,12).forEach(function(d){h4+="<tr><td>"+d.date+" — "+d.event+"</td><td>"+d.items.slice(0,45)+"…</td></tr>"});h4+="</table>";return h4}
     var stockMatch=t.match(/(?:how many|stock of|do we have|qty of|count of|count for|level of|whats? the stock of)\s+(.+?)(?:\?|$| left| remaining)/);
     if(!stockMatch)stockMatch=t.match(/^(.+?)\s+(?:stock|qty|left|remaining)\??$/);
