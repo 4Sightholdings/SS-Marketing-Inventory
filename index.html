@@ -1023,8 +1023,7 @@ window.addEventListener('load', renderChart);
 </script>
 
 
-
-<!-- ========== 4Sight AI Assistant — Embedded Gemini 2.0 ========== -->
+<!-- ========== 4Sight AI Assistant — Gemini 2.0 (New Auth) ========== -->
 <style>
 #aiBotBtn{position:fixed;bottom:24px;left:24px;width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#0a1628 0%,#1a2744 35%,#2563eb 75%,#4fc3f7 100%);color:#fff;border:none;cursor:pointer;z-index:9999;transition:transform .25s,box-shadow .25s;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(10,22,40,.45),inset 0 1px 0 rgba(255,255,255,.18);font-family:'Inter',sans-serif;font-weight:700;overflow:hidden}
 #aiBotBtn::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.25) 0%,transparent 55%);pointer-events:none}
@@ -1109,12 +1108,26 @@ window.addEventListener('load', renderChart);
 
 <script>
 (function(){
-  // ====== EMBEDDED GEMINI API KEY ======
-  // ⚠️ Restrict this key in Google Cloud Console to your dashboard URL only.
-  // Model: gemini-2.0-flash (free tier: 1,500 requests/day)
-  var GEMINI_API_KEY = 'AQ.Ab8RN6LEfkjECV9pT2f7lJFJHIaIOpegR3wpnWzFC5nIrP_sTAE';
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║                                                              ║
+  // ║   👇👇👇  PASTE YOUR GEMINI API KEY ON THE NEXT LINE  👇👇👇   ║
+  // ║                                                              ║
+  // ╚══════════════════════════════════════════════════════════════╝
+  var GEMINI_API_KEY = 'AQ.Ab8RN6LBQkXdYHlkDQK2wQEjNPR-SCEJxZdHWAYv15oKlv2rZw';
+  // ╔══════════════════════════════════════════════════════════════╗
+  // ║   ☝️☝️☝️       END OF KEY — DO NOT REMOVE QUOTES       ☝️☝️☝️   ║
+  // ╚══════════════════════════════════════════════════════════════╝
+  //
+  // Get your key (free, no credit card):
+  //   1. Go to https://aistudio.google.com/apikey
+  //   2. Click "Create API key"
+  //   3. Copy the key (starts with AQ.Ab... or AIzaSy...)
+  //   4. Paste it above between the quotes
+  //   5. Save / commit this file
+  //
+  // Both new (AQ.Ab...) and legacy (AIzaSy...) keys are supported.
+
   var GEMINI_MODEL = 'gemini-2.0-flash';
-  // =====================================
 
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
       clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
@@ -1200,14 +1213,17 @@ window.addEventListener('load', renderChart);
   function buildContext(){var s=getAllStock(),l=getLowStock(),d=getDispatches(),t=getTotals(),tp=getTopDispatched(10);return{currentDate:new Date().toISOString().slice(0,10),user:"Christo Jansen Van Vuuren, Marketing Co-Ordinator at 4Sight Holdings",totals:t,stockLevels:s,lowStock:l,topDispatched:tp,recentDispatches:d.slice(-15)}}
 
   function callGemini(userQuery){
-    if(!GEMINI_API_KEY || GEMINI_API_KEY==='PASTE_YOUR_GEMINI_KEY_HERE'){
-      return Promise.reject(new Error('Gemini key not configured in code'));
+    if(!GEMINI_API_KEY || GEMINI_API_KEY==='PASTE_YOUR_KEY_HERE'){
+      return Promise.reject(new Error('Gemini key not configured — please paste your key into the code'));
     }
     var ctx=buildContext();
     var systemPrompt="You are an AI assistant embedded in Christo's 4Sight Marketing Inventory Dashboard at 4Sight Holdings (a South African technology group). Answer concisely using ONLY the live data provided below. Use HTML formatting (use <strong> for emphasis, <br> for line breaks, <ul><li> for lists, <table><tr><td> for data). Be friendly, professional, and direct. If data is missing, say so clearly. Current date: "+ctx.currentDate+".\n\nLIVE DASHBOARD DATA:\n"+JSON.stringify(ctx,null,2);
-    return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent?key='+encodeURIComponent(GEMINI_API_KEY),{
+    return fetch('https://generativelanguage.googleapis.com/v1beta/models/'+GEMINI_MODEL+':generateContent',{
       method:'POST',
-      headers:{'Content-Type':'application/json'},
+      headers:{
+        'Content-Type':'application/json',
+        'x-goog-api-key': GEMINI_API_KEY
+      },
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:systemPrompt+'\n\nUSER QUESTION: '+userQuery}]}],
         generationConfig:{temperature:0.4,maxOutputTokens:800,topP:0.95}
@@ -1240,5 +1256,6 @@ window.addEventListener('load', renderChart);
 })();
 </script>
 <!-- ========== END 4Sight AI Assistant ========== -->
+
   
 </body></html>
