@@ -1126,11 +1126,11 @@ window.addEventListener('load', renderChart);
   //   4. Paste it above between the quotes
   //   5. Save / commit this file
   //
-  // OpenRouter gives free access to Gemini 2.0 with no regional restrictions.
+  // OpenRouter free models — updated June 2026 (old Mistral 7B / Gemma 2 9B were deprecated).
 
-  var OPENROUTER_MODEL = 'mistralai/mistral-7b-instruct:free';
-  var OPENROUTER_FALLBACK_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
-  var OPENROUTER_THIRD_MODEL = 'google/gemma-2-9b-it:free';
+  var OPENROUTER_MODEL = 'openrouter/auto';
+  var OPENROUTER_FALLBACK_MODEL = 'google/gemini-2.0-flash-exp:free';
+  var OPENROUTER_THIRD_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
 
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
       clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
