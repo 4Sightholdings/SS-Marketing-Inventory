@@ -1083,7 +1083,7 @@ window.addEventListener('load', renderChart);
   <div class="ai-header">
     <div style="flex:1">
       <h4><span class="ai-logo-mini">4</span> 4Sight AI Assistant</h4>
-      <span>Powered by Gemini 2.0 · Always free</span>
+      <span>Powered by Llama 3.3 · Always free</span>
     </div>
     <div class="ai-header-btns">
       <button class="ai-icon-btn" id="aiClearBtn" title="Clear chat">🗑️</button>
@@ -1128,8 +1128,9 @@ window.addEventListener('load', renderChart);
   //
   // OpenRouter gives free access to Gemini 2.0 with no regional restrictions.
 
-  var OPENROUTER_MODEL = 'google/gemini-2.0-flash-exp:free';
-  var OPENROUTER_FALLBACK_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+  var OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
+  var OPENROUTER_FALLBACK_MODEL = 'qwen/qwen3-next-80b-a3b-instruct:free';
+  var OPENROUTER_THIRD_MODEL = 'openai/gpt-oss-120b:free';
 
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
       clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
@@ -1255,7 +1256,11 @@ window.addEventListener('load', renderChart);
     return attempt(OPENROUTER_MODEL).catch(function(err){
       console.warn('Primary model failed:',err.message,'— trying fallback…');
       if(err.message==='AUTH_FAIL')throw err;
-      return attempt(OPENROUTER_FALLBACK_MODEL);
+      return attempt(OPENROUTER_FALLBACK_MODEL).catch(function(err2){
+        console.warn('Fallback model failed:',err2.message,'— trying third option…');
+        if(err2.message==='AUTH_FAIL')throw err2;
+        return attempt(OPENROUTER_THIRD_MODEL);
+      });
     });
   }
 
@@ -1271,7 +1276,18 @@ window.addEventListener('load', renderChart);
         if(answer){var formatted=answer.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');addBot(formatted)}
         else addBot("Hmm, I got no answer from Gemini. Try rephrasing?");
         sendBtn.disabled=false;
-      }).catch(function(err){stopTyping();var friendly;if(err.message==='RATE_LIMIT')friendly='🤖 AI is busy right now — please try again in a moment.';else if(err.message==='AUTH_FAIL')friendly='🔑 API key issue — please check your OpenRouter key in the code.';else if(err.message.indexOf('configured')!==-1)friendly='⚠️ '+err.message;else friendly='⚠️ AI temporarily unavailable: '+err.message;addBot(friendly);sendBtn.disabled=false});
+      }).catch(function(err){
+        stopTyping();
+        console.error('AI request failed:',err);
+        var friendly;
+        if(err.message==='RATE_LIMIT')friendly='🤖 All free AI models are busy right now — please try again in 30 seconds. ⏱️';
+        else if(err.message==='AUTH_FAIL')friendly='🔑 API key issue — your OpenRouter key may be invalid or revoked. Check https://openrouter.ai/keys';
+        else if(err.message.indexOf('configured')!==-1)friendly='⚠️ '+err.message;
+        else if(err.message.indexOf('No endpoints found')!==-1)friendly='⚠️ AI model unavailable — the model was deprecated. Open Console (F12) for details. 🔍';
+        else friendly='⚠️ AI temporarily unavailable: '+err.message+' <br><small style="opacity:0.7">Open Console (F12) for full details.</small>';
+        addBot(friendly);
+        sendBtn.disabled=false;
+      });
     },300);
   }
   sendBtn.addEventListener('click',send);
