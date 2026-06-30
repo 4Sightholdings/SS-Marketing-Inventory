@@ -1083,7 +1083,7 @@ window.addEventListener('load', renderChart);
   <div class="ai-header">
     <div style="flex:1">
       <h4><span class="ai-logo-mini">4</span> 4Sight AI Assistant</h4>
-      <span>Powered by Llama 3.3 · Always free</span>
+      <span>Powered by Mistral 7B · Always free</span>
     </div>
     <div class="ai-header-btns">
       <button class="ai-icon-btn" id="aiClearBtn" title="Clear chat">🗑️</button>
@@ -1128,9 +1128,9 @@ window.addEventListener('load', renderChart);
   //
   // OpenRouter gives free access to Gemini 2.0 with no regional restrictions.
 
-  var OPENROUTER_MODEL = 'meta-llama/llama-3.3-70b-instruct:free';
-  var OPENROUTER_FALLBACK_MODEL = 'qwen/qwen3-next-80b-a3b-instruct:free';
-  var OPENROUTER_THIRD_MODEL = 'openai/gpt-oss-120b:free';
+  var OPENROUTER_MODEL = 'mistralai/mistral-7b-instruct:free';
+  var OPENROUTER_FALLBACK_MODEL = 'meta-llama/llama-3.2-3b-instruct:free';
+  var OPENROUTER_THIRD_MODEL = 'google/gemma-2-9b-it:free';
 
   var btn=document.getElementById('aiBotBtn'),panel=document.getElementById('aiBotPanel'),closeBtn=document.getElementById('aiBotClose'),
       clearBtn=document.getElementById('aiClearBtn'),messages=document.getElementById('aiBotMessages'),
